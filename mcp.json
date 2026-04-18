@@ -1,0 +1,307 @@
+{
+  "$comment": "MCP manifest for vibe4trading-openclaw-skill. Server implements MCP initialize/tools-list/tools-call over stdio (Content-Length framed and newline-delimited). Register in opencode.json: { \"openclaw-trading\": { \"type\": \"local\", \"command\": [\"bun\", \"run\", \"src/mcp-server.ts\"], \"timeout\": 30000 } }",
+  "name": "openclaw-trading",
+  "version": "0.1.0",
+  "description": "OpenClaw vibe4trading skill MCP server — wallet creation with one-time mnemonic display, onboarding/deposit, override reset, token setup, trading lifecycle, status, and trade history",
+  "transport": "stdio",
+  "command": ["bun", "run", "src/mcp-server.ts"],
+  "tools": [
+    {
+      "name": "create_wallet",
+      "description": "Create a new BIP-39 wallet. Returns the address and mnemonic for one-time display. The mnemonic is shown exactly once; call confirm_backup after the operator has recorded it.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "path": {
+            "type": "string",
+            "description": "Override mnemonic file path (default: ~/Desktop/openclaw-v4t-wallet-mnemonic.txt)."
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "confirm_backup",
+      "description": "Confirm that the operator has backed up the mnemonic. Must be called after create_wallet displayed the mnemonic. After confirmation, the mnemonic is never shown again via this tool.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {},
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "recover_mnemonic",
+      "description": "Deliberate local recovery: re-read the mnemonic from the desktop file. Only works if the file exists and has 0600 permissions.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "path": {
+            "type": "string",
+            "description": "Override mnemonic file path."
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "get_onboarding_status",
+      "description": "Check wallet funding status: combined USDC + USDT stablecoin balance, ETH gas, bridge cap headroom, and readiness to deposit. Returns bootstrap guidance when runtime state has not been initialized yet. USDT shortfall is auto-converted to USDC before bridging.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {},
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "deposit_to_hyperliquid",
+      "description": "Initiate a USDC bridge deposit from Arbitrum into Hyperliquid. Auto-converts USDT to USDC when native USDC is insufficient. Reads the local mnemonic to sign the transaction. Checks preflight balances, cap headroom, and minimum bridge amount before submitting.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "amountUsdc": {
+            "type": "string",
+            "description": "USDC amount to bridge. Omit to bridge the maximum available."
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "reset_override_phrase",
+      "description": "Clear persisted override-phrase acceptance without altering cumulative bridge history. Future over-cap decisions require fresh operator consent again.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {},
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "set_v4t_token",
+      "description": "Persist or clear the vibe4trading bot token in runtime state. The token authenticates suggestion API requests.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "token": {
+            "type": ["string", "null"],
+            "description": "The vibe4trading bot token to persist, or null to clear it."
+          }
+        },
+        "required": ["token"],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "start_trading",
+      "description": "Arm trading for OpenClaw cron-managed execution at fixed :30 UTC intervals. Runs startup reconciliation against Hyperliquid exchange state and sets status to running. On mainnet, requires prior acknowledge_live_trading consent. Safe to call when already running (re-reconciles).",
+      "inputSchema": {
+        "type": "object",
+        "properties": {},
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "stop_trading",
+      "description": "Emergency halt: cancel all open Hyperliquid orders, clear the dead-man switch, set status to halted. Does not close or flatten open positions. Further ticks are refused until start_trading re-arms trading.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {},
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "get_tick_context",
+      "description": "Return the current tick preview context: persisted trading selection, onboarding/funding state, hold reasons, agent.md summary, suggestion request/result, and allowed order styles before execution. Returns bootstrap guidance when runtime state has not been initialized yet.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "slotId": {
+            "type": "string",
+            "description": "Optional canonical tick slot override (hh:30 UTC) for previewing a specific slot."
+          },
+          "intent": {
+            "type": "object",
+            "properties": {
+              "action": {
+                "type": "string",
+                "enum": ["hold", "target-position"],
+                "description": "Required explicit execution intent action. Use \"hold\" for a visible no-trade decision or \"target-position\" to author/reshape the target position for this tick."
+              },
+              "side": {
+                "type": "string",
+                "enum": ["long", "short", "flat"],
+                "description": "Optional target side override for action=\"target-position\". Allowed values: long, short, flat."
+              },
+              "targetFraction": {
+                "type": "string",
+                "description": "Optional target notional fraction override for action=\"target-position\". Still constrained by code-owned safety caps."
+              },
+              "leverage": {
+                "type": "number",
+                "description": "Optional non-negative integer leverage override for action=\"target-position\". Still constrained by code-owned safety caps."
+              },
+              "orderStyle": {
+                "type": "string",
+                "enum": ["ioc", "gtc"],
+                "description": "Optional execution order style. Allowed values: \"ioc\" or \"gtc\"."
+              },
+              "rationale": {
+                "type": "string",
+                "minLength": 1,
+                "description": "Required non-empty rationale for the explicit agent-authored intent."
+              }
+            },
+            "required": ["action", "rationale"],
+            "additionalProperties": false,
+            "description": "Optional explicit agent-authored execution intent preview. intent.action and intent.rationale are required when intent is provided."
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "execute_tick",
+      "description": "Run a single one-shot trading tick. Reconciles state, fetches suggestions, evaluates policy, and executes. Optional slotId/intent fields let the agent preview or direct execution while preserving code-owned safety caps and validated order styles.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "slotId": {
+            "type": "string",
+            "description": "Optional canonical tick slot override (hh:30 UTC)."
+          },
+          "intent": {
+            "type": "object",
+            "properties": {
+              "action": {
+                "type": "string",
+                "enum": ["hold", "target-position"],
+                "description": "Required explicit execution intent action. Use \"hold\" for a visible no-trade decision or \"target-position\" to author/reshape the target position for this tick."
+              },
+              "side": {
+                "type": "string",
+                "enum": ["long", "short", "flat"],
+                "description": "Optional target side override for action=\"target-position\". Allowed values: long, short, flat."
+              },
+              "targetFraction": {
+                "type": "string",
+                "description": "Optional target notional fraction override for action=\"target-position\". Still constrained by code-owned safety caps."
+              },
+              "leverage": {
+                "type": "number",
+                "description": "Optional non-negative integer leverage override for action=\"target-position\". Still constrained by code-owned safety caps."
+              },
+              "orderStyle": {
+                "type": "string",
+                "enum": ["ioc", "gtc"],
+                "description": "Optional execution order style. Allowed values: \"ioc\" or \"gtc\"."
+              },
+              "rationale": {
+                "type": "string",
+                "minLength": 1,
+                "description": "Required non-empty rationale for the explicit agent-authored intent."
+              }
+            },
+            "required": ["action", "rationale"],
+            "additionalProperties": false,
+            "description": "Optional explicit agent-authored execution intent. intent.action and intent.rationale are required when intent is provided."
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "get_status",
+      "description": "Return current trading status snapshot: daemonStatus, lastExecutedSlot, lastSuggestionId, exchangeActivity, haltReason, currentSlot, network, walletBackup, tradingSelection, liveTradingConsent, and fundingReadiness. Returns bootstrap guidance when runtime state has not been initialized yet.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {},
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "get_trade_history",
+      "description": "Read recent execution audit entries from the NDJSON log. Entries include retry and reshaping metadata when applicable.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "limit": {
+            "type": "number",
+            "description": "Max entries to return. Omit or 0 for all."
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "acknowledge_live_trading",
+      "description": "Acknowledge acceptance of live mainnet trading risks. Required once before the first mainnet start_trading call. Persisted in runtime state and survives restarts.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "confirmed": {
+            "type": "boolean",
+            "const": true,
+            "description": "Must be true to acknowledge live trading risks."
+          }
+        },
+        "required": ["confirmed"],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "get_trading_options",
+      "description": "Return available trading options from the cached agent.md catalog. Shows option IDs, labels, markets, models, strategies, and strategy profiles. Use set_trading_selection to choose one.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {},
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "set_trading_selection",
+      "description": "Set or change the persisted trading selection from the allowed agent.md catalog. Validates the optionId against the cached catalog and persists the selection in runtime state for restart-safe behavior.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "optionId": {
+            "type": "string",
+            "description": "The ID of the trading option to select from the agent.md catalog. Use get_trading_options to see available IDs."
+          }
+        },
+        "required": ["optionId"],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "accept_override_phrase",
+      "description": "Accept the override phrase to permit over-cap bridge decisions. Persisted in runtime state and survives restarts. Use reset_override_phrase to revoke.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "confirmed": {
+            "type": "boolean",
+            "const": true,
+            "description": "Must be true to accept the override phrase."
+          }
+        },
+        "required": ["confirmed"],
+        "additionalProperties": false
+      }
+    },
+    {
+      "name": "cleanup_mnemonic_file",
+      "description": "Archive or permanently delete the local mnemonic file after backup has been confirmed. Requires walletBackup.status to be confirmed. Updates persisted backup lifecycle status.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "action": {
+            "type": "string",
+            "enum": ["archive", "delete"],
+            "description": "Either \"archive\" (rename with timestamp suffix) or \"delete\" (permanent removal)."
+          }
+        },
+        "required": ["action"],
+        "additionalProperties": false
+      }
+    }
+  ]
+}
