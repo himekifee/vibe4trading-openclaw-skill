@@ -135,6 +135,7 @@ export type LocalPolicyDecision = PolicyHoldDecision | PolicyTargetPositionDecis
 
 export type PolicyEvaluationInput = {
   readonly now?: Date;
+  readonly slotId?: string;
   readonly runtimeState: RuntimeState;
   readonly suggestionResult: TickRecommendationResult | null;
   readonly agentMdPolicy: AgentMdPolicyView | null;
@@ -165,7 +166,7 @@ export function createEmptyPriorInteractionSummary(): PriorInteractionSummary {
 export function evaluateOpenClawPolicy(input: PolicyEvaluationInput): LocalPolicyDecision {
   const now = input.now ?? new Date();
   const evaluatedAt = now.toISOString();
-  const slotId = slotIdFromDate(now);
+  const slotId = input.slotId ?? slotIdFromDate(now);
   const runtimeState = parseRuntimeState(input.runtimeState);
   const preferences = normalizeUserPreferences(input.userPreferences);
   const priorInteractionSummary = normalizePriorInteractionSummary(input.priorInteractionSummary);

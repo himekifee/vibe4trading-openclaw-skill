@@ -47,6 +47,7 @@ export type DaemonDeps = {
     agentMdResult: AgentMdRefreshResult;
     onboardingStatus: OnboardingStatusResult;
     now: Date;
+    slotId: string;
     userPreferences?: PolicyUserPreferences;
     priorInteractionSummary?: PriorInteractionSummary;
     executionIntent?: PolicyExecutionIntent;

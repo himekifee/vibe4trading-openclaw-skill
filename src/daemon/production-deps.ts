@@ -134,6 +134,7 @@ export function createProductionDaemonDeps(): DaemonDeps {
       agentMdResult,
       onboardingStatus,
       now,
+      slotId,
       userPreferences,
       priorInteractionSummary,
       executionIntent,
@@ -150,6 +151,7 @@ export function createProductionDaemonDeps(): DaemonDeps {
       };
       return runPolicyEvaluation({
         now,
+        slotId,
         runtimeState,
         suggestionResult,
         agentMdPolicy: agentMdResult.policy,
