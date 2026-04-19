@@ -963,36 +963,18 @@ async function placeAndRecordOrder(params: {
 }
 
 async function reconcileDeadManProtection(
-  marketId: string,
-  deps: ExecutionDeps,
+  _marketId: string,
+  _deps: ExecutionDeps,
   actions: ExecutionAction[],
 ): Promise<void> {
-  const coin = extractCoinFromMarketId(marketId);
-  const baseAsset = extractBaseAsset(coin);
-  const openOrders = await deps.getOpenOrders(coin);
-  const positionSize = normalizeSignedDecimalString(await deps.getPositionSize(baseAsset));
-  const hasPosition = !isZeroSignedDecimalString(positionSize);
-
-  if (openOrders.length > 0 || hasPosition) {
-    const deadMan = await deps.scheduleDeadMan();
-    actions.push({
-      kind: "dead-man-schedule",
-      detail: deadMan.scheduled
-        ? `Dead-man scheduled at ${deadMan.cancelTimeMs}`
-        : `Dead-man failed: ${deadMan.reason}`,
-      exchangeId: null,
-    });
-    return;
-  }
-
-  if (deps.clearDeadMan !== undefined) {
-    await deps.clearDeadMan();
-    actions.push({
-      kind: "dead-man-clear",
-      detail: "Dead-man cleared — flat with no pending orders.",
-      exchangeId: null,
-    });
-  }
+  // Dead-man switch disabled — Hyperliquid requires $1M traded volume before
+  // scheduling a cancel, which no user meets at this stage. Re-enable once
+  // the volume gate is no longer a blocker.
+  actions.push({
+    kind: "dead-man-schedule",
+    detail: "Dead-man switch disabled — requires $1M traded volume on Hyperliquid.",
+    exchangeId: null,
+  });
 }
 
 export type ExecutionAuditEntry = {

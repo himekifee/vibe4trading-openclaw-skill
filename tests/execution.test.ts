@@ -129,8 +129,7 @@ describe("execution engine — spot", () => {
     expect(result.skipped).toBe(false);
     expect(result.judgmentSummary).toContain("Hold");
     expect(result.actions.some((a) => a.kind === "no-trade")).toBe(true);
-    expect(result.actions.some((a) => a.kind === "dead-man-clear")).toBe(true);
-    expect(result.actions.some((a) => a.kind === "dead-man-schedule")).toBe(false);
+    expect(result.actions.some((a) => a.kind === "dead-man-schedule")).toBe(true);
     expect(result.slotId).toBe(SLOT_ID);
     expect(result.suggestionId).toBeNull();
   });
@@ -171,8 +170,8 @@ describe("execution engine — spot", () => {
     expect(orderActions).toHaveLength(1);
     expect(orderActions[0].detail).toContain("success=false");
     expect(orderActions[0].detail).toContain("Insufficient margin to place order.");
-    expect(result.actions.some((a) => a.kind === "dead-man-schedule")).toBe(false);
-    expect(result.actions.some((a) => a.kind === "dead-man-clear")).toBe(true);
+    expect(result.actions.some((a) => a.kind === "dead-man-schedule")).toBe(true);
+    expect(result.actions.some((a) => a.kind === "dead-man-clear")).toBe(false);
   });
 
   it("spot target sizes from current position delta", async () => {
@@ -257,7 +256,7 @@ describe("execution engine — spot", () => {
     expect(cancelActions).toHaveLength(2);
     expect(cancelActions[0].exchangeId).toBe("100");
     expect(cancelActions[1].exchangeId).toBe("101");
-    expect(result.actions.some((a) => a.kind === "dead-man-clear")).toBe(true);
+    expect(result.actions.some((a) => a.kind === "dead-man-schedule")).toBe(true);
   });
 
   it("spot flat with no open orders and no position produces no-trade action", async () => {
@@ -268,7 +267,7 @@ describe("execution engine — spot", () => {
     const result = await executeDecision(decision, state, deps, EXECUTED_AT);
 
     expect(result.actions.some((a) => a.kind === "no-trade")).toBe(true);
-    expect(result.actions.some((a) => a.kind === "dead-man-clear")).toBe(true);
+    expect(result.actions.some((a) => a.kind === "dead-man-schedule")).toBe(true);
     expect(result.judgmentSummary).toContain("flat");
   });
 
@@ -297,7 +296,7 @@ describe("execution engine — spot", () => {
     expect(closeActions[0].detail).toContain("1.5");
     expect(closeActions[0].detail).toContain("ETH");
     expect(closeActions[0].detail).toContain("reduce-only");
-    expect(result.actions.some((a) => a.kind === "dead-man-clear")).toBe(true);
+    expect(result.actions.some((a) => a.kind === "dead-man-schedule")).toBe(true);
   });
 
   it("spot flat close returns structured failure on embedded order rejection", async () => {
@@ -365,8 +364,8 @@ describe("execution engine — spot", () => {
     const result = await executeDecision(decision, state, noMidDeps, EXECUTED_AT);
 
     expect(result.actions.some((a) => a.kind === "no-trade")).toBe(true);
-    expect(result.actions.some((a) => a.kind === "dead-man-schedule")).toBe(false);
-    expect(result.actions.some((a) => a.kind === "dead-man-clear")).toBe(true);
+    expect(result.actions.some((a) => a.kind === "dead-man-schedule")).toBe(true);
+    expect(result.actions.some((a) => a.kind === "dead-man-clear")).toBe(false);
     expect(result.judgmentSummary).toContain("no mid price");
   });
 

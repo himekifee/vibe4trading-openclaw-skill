@@ -161,27 +161,33 @@ function spotTargetDecision(): LocalPolicyDecision {
 }
 
 describe("execution deadman scheduling", () => {
-  it("hold execution does not arm dead-man on pure no-order path", async () => {
+  it("hold execution records disabled dead-man action", async () => {
     const { deps, calls } = createTrackingDeps();
     const state = createPerpState();
 
-    await executeDecision(perpHoldDecision(), state, deps, EXECUTED_AT);
+    const result = await executeDecision(perpHoldDecision(), state, deps, EXECUTED_AT);
 
     expect(calls.filter((c) => c === "scheduleDeadMan")).toHaveLength(0);
-    expect(calls.filter((c) => c === "clearDeadMan")).toHaveLength(1);
+    expect(calls.filter((c) => c === "clearDeadMan")).toHaveLength(0);
+    const deadManAction = result.actions.find((a) => a.kind === "dead-man-schedule");
+    expect(deadManAction).toBeDefined();
+    expect(deadManAction?.detail).toContain("disabled");
   });
 
-  it("perp target-position does not arm dead-man when IOC leaves no orders", async () => {
+  it("perp target-position records disabled dead-man action instead of clearing", async () => {
     const { deps, calls } = createTrackingDeps();
     const state = createPerpState();
 
-    await executeDecision(perpTargetDecision(), state, deps, EXECUTED_AT);
+    const result = await executeDecision(perpTargetDecision(), state, deps, EXECUTED_AT);
 
     expect(calls.filter((c) => c === "scheduleDeadMan")).toHaveLength(0);
-    expect(calls.filter((c) => c === "clearDeadMan")).toHaveLength(1);
+    expect(calls.filter((c) => c === "clearDeadMan")).toHaveLength(0);
+    const deadManAction = result.actions.find((a) => a.kind === "dead-man-schedule");
+    expect(deadManAction).toBeDefined();
+    expect(deadManAction?.detail).toContain("disabled");
   });
 
-  it("spot target-position arms dead-man when open orders remain", async () => {
+  it("spot target-position with open orders records disabled dead-man action", async () => {
     const { deps, calls } = createTrackingDeps();
     const state = createSpotState();
 
@@ -190,13 +196,16 @@ describe("execution deadman scheduling", () => {
       getOpenOrders: async () => [{ oid: 1, coin: "ETH/USDC" }],
     };
 
-    await executeDecision(spotTargetDecision(), state, depsWithOrders, EXECUTED_AT);
+    const result = await executeDecision(spotTargetDecision(), state, depsWithOrders, EXECUTED_AT);
 
-    expect(calls.filter((c) => c === "scheduleDeadMan")).toHaveLength(1);
+    expect(calls.filter((c) => c === "scheduleDeadMan")).toHaveLength(0);
     expect(calls.filter((c) => c === "clearDeadMan")).toHaveLength(0);
+    const deadManAction = result.actions.find((a) => a.kind === "dead-man-schedule");
+    expect(deadManAction).toBeDefined();
+    expect(deadManAction?.detail).toContain("disabled");
   });
 
-  it("flat target-position clears dead-man after successful flatten", async () => {
+  it("flat target-position records disabled dead-man action after successful flatten", async () => {
     const { deps, calls } = createTrackingDeps();
     const state = createPerpState();
     const decision = {
@@ -213,14 +222,17 @@ describe("execution deadman scheduling", () => {
       },
     };
 
-    await executeDecision(decision, state, depsAfterClose, EXECUTED_AT);
+    const result = await executeDecision(decision, state, depsAfterClose, EXECUTED_AT);
 
     expect(calls.filter((c) => c === "scheduleDeadMan")).toHaveLength(0);
-    expect(calls.filter((c) => c === "clearDeadMan")).toHaveLength(1);
+    expect(calls.filter((c) => c === "clearDeadMan")).toHaveLength(0);
+    const deadManAction = result.actions.find((a) => a.kind === "dead-man-schedule");
+    expect(deadManAction).toBeDefined();
+    expect(deadManAction?.detail).toContain("disabled");
   });
 
-  it("dead-man schedule failure is recorded in actions but does not throw", async () => {
-    const failDeps: ExecutionDeps = {
+  it("dead-man disabled action is recorded and does not throw", async () => {
+    const deps: ExecutionDeps = {
       syncLeverage: async () => ({ success: true, exchangeId: null }),
       placeOrder: async () => ({ success: true, statuses: [] }),
       cancelOrder: async () => ({ success: true }),
@@ -239,25 +251,26 @@ describe("execution deadman scheduling", () => {
     };
 
     const state = createPerpState();
-    const result = await executeDecision(perpTargetDecision(), state, failDeps, EXECUTED_AT);
+    const result = await executeDecision(perpTargetDecision(), state, deps, EXECUTED_AT);
 
     expect(result.skipped).toBe(false);
     const deadManAction = result.actions.find((a) => a.kind === "dead-man-schedule");
     expect(deadManAction).toBeDefined();
-    expect(deadManAction?.detail).toContain("Dead-man failed");
+    expect(deadManAction?.detail).toContain("disabled");
   });
 
-  it("dead-man clear action appears as last action when no orders remain", async () => {
+  it("disabled dead-man-schedule appears as last action", async () => {
     const { deps } = createTrackingDeps();
     const state = createPerpState();
 
     const result = await executeDecision(perpTargetDecision(), state, deps, EXECUTED_AT);
 
     const lastAction = result.actions[result.actions.length - 1];
-    expect(lastAction.kind).toBe("dead-man-clear");
+    expect(lastAction.kind).toBe("dead-man-schedule");
+    expect(lastAction.detail).toContain("disabled");
   });
 
-  it("no-mid-price path clears dead-man when no orders remain", async () => {
+  it("no-mid-price path records disabled dead-man action", async () => {
     const { deps, calls } = createTrackingDeps();
     const noMidDeps: ExecutionDeps = {
       ...deps,
@@ -268,7 +281,9 @@ describe("execution deadman scheduling", () => {
     const result = await executeDecision(perpTargetDecision(), state, noMidDeps, EXECUTED_AT);
 
     expect(calls.filter((c) => c === "scheduleDeadMan")).toHaveLength(0);
-    expect(calls.filter((c) => c === "clearDeadMan")).toHaveLength(1);
-    expect(result.actions.some((a) => a.kind === "dead-man-clear")).toBe(true);
+    expect(calls.filter((c) => c === "clearDeadMan")).toHaveLength(0);
+    const deadManAction = result.actions.find((a) => a.kind === "dead-man-schedule");
+    expect(deadManAction).toBeDefined();
+    expect(deadManAction?.detail).toContain("disabled");
   });
 });

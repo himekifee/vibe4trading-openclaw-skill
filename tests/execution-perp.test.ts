@@ -172,7 +172,7 @@ describe("execution engine — perp", () => {
     expect(orderAction).toBeDefined();
     expect(orderAction?.detail).toContain("success=false");
     expect(orderAction?.detail).toContain("Insufficient margin to place order.");
-    expect(result.actions.some((a) => a.kind === "dead-man-clear")).toBe(true);
+    expect(result.actions.some((a) => a.kind === "dead-man-schedule")).toBe(true);
   });
 
   it("computes perp order size from target minus current position delta", async () => {
@@ -353,7 +353,7 @@ describe("execution engine — perp", () => {
     expect(closeActions[0].detail).toContain("Close");
     expect(closeActions[0].detail).toContain("-2.5");
     expect(closeActions[0].detail).toContain("reduce-only");
-    expect(result.actions.some((a) => a.kind === "dead-man-clear")).toBe(true);
+    expect(result.actions.some((a) => a.kind === "dead-man-schedule")).toBe(true);
     expect(result.judgmentSummary).toContain("flat");
   });
 
@@ -458,7 +458,7 @@ describe("execution engine — perp", () => {
 
     const result = await executeDecision(holdDecision, state, deps, EXECUTED_AT);
 
-    expect(result.actions.some((a) => a.kind === "dead-man-clear")).toBe(true);
+    expect(result.actions.some((a) => a.kind === "dead-man-schedule")).toBe(true);
     expect(result.actions.some((a) => a.kind === "no-trade")).toBe(true);
   });
 
