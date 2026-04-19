@@ -26,7 +26,7 @@ export type DaemonStatus = (typeof DAEMON_STATUSES)[number];
 
 export type WalletState = {
   readonly address: string;
-  readonly mnemonicFilePath: string;
+  readonly privateKey: string;
 };
 
 export type BridgeTransferRecord = {
@@ -297,16 +297,23 @@ export function deserializeRuntimeState(jsonText: string): RuntimeState {
 function parseWalletState(value: unknown): WalletState {
   const context = "RuntimeState.wallet";
   const input = expectPlainObject(value, context);
-  assertExactKeys(input, ["address", "mnemonicFilePath"], context);
+  const allowedKeys = ["address", "privateKey"];
+  for (const key of Object.keys(input)) {
+    if (!allowedKeys.includes(key)) {
+      throw new SchemaValidationError(
+        `Unexpected key "${key}" in ${context}. Allowed keys: ${allowedKeys.join(", ")}`,
+      );
+    }
+  }
 
-  return {
-    address: readRequiredString(input, "address", context, {
-      pattern: ETH_ADDRESS_PATTERN,
-    }),
-    mnemonicFilePath: readRequiredString(input, "mnemonicFilePath", context, {
-      absolutePath: true,
-    }),
-  };
+  const address = readRequiredString(input, "address", context, {
+    pattern: ETH_ADDRESS_PATTERN,
+  });
+  const privateKey = readRequiredString(input, "privateKey", context, {
+    pattern: /^0x[a-fA-F0-9]{64}$/,
+  });
+
+  return { address, privateKey };
 }
 
 function parseBridgeTransferRecord(value: unknown, index: number): BridgeTransferRecord {

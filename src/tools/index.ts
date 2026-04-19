@@ -35,3 +35,5 @@ export { get_trading_options } from "./get-trading-options";
 export { set_trading_selection } from "./set-trading-selection";
 export { accept_override_phrase } from "./accept-override-phrase";
 export { cleanup_mnemonic_file } from "./cleanup-mnemonic-file";
+export { recover_from_mnemonic } from "./recover-from-mnemonic";
+export type { RecoverFromMnemonicResult } from "./recover-from-mnemonic";

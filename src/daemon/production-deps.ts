@@ -1,6 +1,6 @@
 import { readFile } from "node:fs/promises";
 
-import { mnemonicToAccount } from "viem/accounts";
+import { privateKeyToAccount } from "viem/accounts";
 
 import {
   assertArray,
@@ -215,13 +215,8 @@ function createHyperliquidReadClient(): HyperliquidReadClient {
   });
 }
 
-// Security: mnemonic is read only at the point of signing (when a write
-// client is actually needed), not during daemon startup or preflight.
-// JS strings are immutable and cannot be zeroed; limiting lifetime so GC
-// can reclaim the interned copy sooner is the best available mitigation.
 async function createHyperliquidWriteClient(state: RuntimeState): Promise<HyperliquidWriteClient> {
-  const mnemonic = (await readFile(state.wallet.mnemonicFilePath, "utf8")).trim();
-  const wallet = mnemonicToAccount(mnemonic);
+  const wallet = privateKeyToAccount(state.wallet.privateKey as `0x${string}`);
   return createWriteClient({
     isTestnet: resolveNetworkTarget() === "testnet",
     timeoutMs: HYPERLIQUID_CLIENT_TIMEOUT_MS,
@@ -440,7 +435,7 @@ export type EmergencyCleanupResult = {
 
 export async function emergencyCancelAndClearDeadMan(
   walletAddress: string,
-  mnemonicFilePath: string,
+  privateKey: string,
 ): Promise<EmergencyCleanupResult> {
   const errors: string[] = [];
   let cancelAttempted = false;
@@ -449,8 +444,7 @@ export async function emergencyCancelAndClearDeadMan(
 
   let writeClient: HyperliquidWriteClient;
   try {
-    const mnemonic = (await readFile(mnemonicFilePath, "utf8")).trim();
-    const wallet = mnemonicToAccount(mnemonic);
+    const wallet = privateKeyToAccount(privateKey as `0x${string}`);
     writeClient = createWriteClient({
       isTestnet: resolveNetworkTarget() === "testnet",
       timeoutMs: HYPERLIQUID_CLIENT_TIMEOUT_MS,

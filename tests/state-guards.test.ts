@@ -7,7 +7,7 @@ function stateWithExposure(hasOpenPosition: boolean, hasPendingOrder: boolean) {
   return createRuntimeState({
     wallet: {
       address: "0x1234567890abcdef1234567890ABCDEF12345678",
-      mnemonicFilePath: "/tmp/mnemonic.txt",
+      privateKey: `0x${"ab".repeat(32)}`,
     },
     market: {
       venue: "hyperliquid",

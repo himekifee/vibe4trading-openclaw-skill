@@ -5,7 +5,7 @@ import { parseRuntimeState } from "../src/state";
 const validStateFixture = {
   wallet: {
     address: "0x1234567890abcdef1234567890ABCDEF12345678",
-    mnemonicFilePath: "/home/grider/Desktop/openclaw-v4t-wallet-mnemonic.txt",
+    privateKey: "0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
   },
   vibe4tradingToken: "token",
   market: {

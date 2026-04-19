@@ -18,6 +18,7 @@ const BIP39_SALT = "mnemonic";
 export type WalletCreationResult = {
   readonly mnemonic: string;
   readonly address: string;
+  readonly privateKey: string;
   readonly mnemonicFilePath: string;
 };
 
@@ -44,11 +45,12 @@ function deriveAccountFromMnemonic(mnemonic: string) {
   }
 
   const privateKey = `0x${Buffer.from(derivedKey.privateKey).toString("hex")}` as const;
-  return privateKeyToAccount(privateKey);
+  const account = privateKeyToAccount(privateKey);
+  return { account, privateKey };
 }
 
 export function derivePubKeyFromMnemonic(mnemonic: string): `0x${string}` {
-  return deriveAccountFromMnemonic(mnemonic).publicKey as `0x${string}`;
+  return deriveAccountFromMnemonic(mnemonic).account.publicKey as `0x${string}`;
 }
 
 export function pubKeyToAddress(pubKeyHex: `0x${string}`): `0x${string}` {
@@ -56,7 +58,11 @@ export function pubKeyToAddress(pubKeyHex: `0x${string}`): `0x${string}` {
 }
 
 export function deriveAddressFromMnemonic(mnemonic: string): `0x${string}` {
-  return deriveAccountFromMnemonic(mnemonic).address as `0x${string}`;
+  return deriveAccountFromMnemonic(mnemonic).account.address as `0x${string}`;
+}
+
+export function derivePrivateKeyFromMnemonic(mnemonic: string): string {
+  return deriveAccountFromMnemonic(mnemonic).privateKey;
 }
 
 /**
@@ -69,11 +75,11 @@ export function createWallet(overridePath?: string): WalletCreationResult {
   assertDesktopDirectory(overridePath ? dirname(targetPath) : DESKTOP_DIRECTORY);
 
   const mnemonic = generateMnemonic(english);
-  const address = deriveAddressFromMnemonic(mnemonic);
+  const { account, privateKey } = deriveAccountFromMnemonic(mnemonic);
 
   exportMnemonicToFile(mnemonic, targetPath);
 
-  return { mnemonic, address, mnemonicFilePath: targetPath };
+  return { mnemonic, address: account.address, privateKey, mnemonicFilePath: targetPath };
 }
 
 export function assertFilePermissions(filePath: string): void {

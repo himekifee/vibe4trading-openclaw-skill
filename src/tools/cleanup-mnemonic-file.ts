@@ -1,7 +1,7 @@
 import { chmod, mkdir, readFile, rename, rm, stat } from "node:fs/promises";
 import { dirname, join } from "node:path";
 
-import { MNEMONIC_FILE_MODE } from "../config/paths";
+import { MNEMONIC_FILE_MODE, MNEMONIC_FILE_PATH } from "../config/paths";
 import { isNodeError } from "../daemon/errors";
 import { StateReadError } from "../daemon/runtime-state-file";
 import { readRuntimeStateFile, updateRuntimeStateFile } from "../daemon/runtime-state-file";
@@ -11,9 +11,10 @@ import { buildOnboardingBootstrapGuidance } from "./bootstrap-guidance";
 
 export async function cleanup_mnemonic_file(args: {
   readonly action: "archive" | "delete";
+  readonly path?: string;
   readonly stateFilePath?: string;
 }) {
-  const { action, stateFilePath } = args;
+  const { action, path, stateFilePath } = args;
 
   if (action !== "archive" && action !== "delete") {
     throw new Error('cleanup_mnemonic_file action must be "archive" or "delete".');
@@ -32,8 +33,6 @@ export async function cleanup_mnemonic_file(args: {
     throw error;
   }
 
-  const mnemonicFilePath = state.wallet.mnemonicFilePath;
-
   // Early guard: reject immediately if backup isn't confirmed.
   // The updater lambdas below re-check inside the atomic read-modify-write
   // to cover TOCTOU races, but this early check avoids irreversible file
@@ -43,6 +42,8 @@ export async function cleanup_mnemonic_file(args: {
       `Cannot cleanup mnemonic file: wallet backup status is "${state.walletBackup.status}", must be "confirmed". Confirm backup first via confirm_backup.`,
     );
   }
+
+  const mnemonicFilePath = path ?? MNEMONIC_FILE_PATH;
 
   let fileStat: Awaited<ReturnType<typeof stat>>;
   try {

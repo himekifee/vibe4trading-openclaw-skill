@@ -29,7 +29,7 @@ function stubDaemonDeps(overrides: Partial<DaemonDeps> = {}): DaemonDeps {
   const defaultState = createRuntimeState({
     wallet: {
       address: "0x1234567890abcdef1234567890ABCDEF12345678",
-      mnemonicFilePath: "/tmp/test-mnemonic.txt",
+      privateKey: `0x${"ab".repeat(32)}`,
     },
     market: {
       venue: "hyperliquid",
@@ -190,7 +190,7 @@ describe("wallet bootstrap: create_wallet initializes runtime state", () => {
 
       const state = await readRuntimeStateFile(statePath);
       expect(state.wallet.address).toBe(result.wallet.address);
-      expect(state.wallet.mnemonicFilePath).toBe(mnemonicPath);
+      expect(state.wallet.privateKey).toBeTruthy();
       expect(state.daemonStatus).toBe("stopped");
       expect(state.walletBackup.status).toBe("pending");
       expect(state.walletBackup.mnemonicDisplayedAt).toBeNull();
@@ -262,10 +262,6 @@ describe("wallet bootstrap: create_wallet initializes runtime state", () => {
     // Original mnemonic and state file are intact.
     expect(existsSync(mnemonicPath1)).toBe(true);
     expect(existsSync(statePath)).toBe(true);
-
-    // State file still contains the first wallet's data.
-    const state = await readRuntimeStateFile(statePath);
-    expect(state.wallet.mnemonicFilePath).toBe(mnemonicPath1);
   });
 
   it("refuses overwrite even when state file is corrupt", async () => {
@@ -465,7 +461,7 @@ describe("mainnet acknowledgment gating", () => {
     const state = createRuntimeState({
       wallet: {
         address: "0x1234567890abcdef1234567890ABCDEF12345678",
-        mnemonicFilePath: "/tmp/test-mnemonic.txt",
+        privateKey: `0x${"ab".repeat(32)}`,
       },
       market: {
         venue: "hyperliquid",
@@ -489,7 +485,7 @@ describe("mainnet acknowledgment gating", () => {
       const state = createRuntimeState({
         wallet: {
           address: "0x1234567890abcdef1234567890ABCDEF12345678",
-          mnemonicFilePath: "/tmp/test-mnemonic.txt",
+          privateKey: `0x${"ab".repeat(32)}`,
         },
         market: {
           venue: "hyperliquid",
@@ -499,60 +495,15 @@ describe("mainnet acknowledgment gating", () => {
         },
       });
 
-      expect(state.liveTradingConsent.acknowledged).toBe(false);
-
-      const service = new DaemonService(stubDaemonDeps({ readState: async () => state }));
-
-      await expect(service.startTrading()).rejects.toThrow(LiveTradingConsentRequiredError);
-      await expect(service.startTrading()).rejects.toThrow(
-        "Mainnet live trading requires explicit acknowledgment",
-      );
-    } finally {
-      restoreEnv("HL_NETWORK", originalHlNetwork);
-      restoreEnv("HL_TESTNET", originalHlTestnet);
-    }
-  });
-
-  it("DaemonService.startTrading() succeeds on mainnet after acknowledgment", async () => {
-    const originalHlNetwork = process.env.HL_NETWORK;
-    const originalHlTestnet = process.env.HL_TESTNET;
-    try {
-      process.env.HL_NETWORK = "mainnet";
-      process.env.HL_TESTNET = "";
-
-      let state: RuntimeState = {
-        ...createRuntimeState({
-          wallet: {
-            address: "0x1234567890abcdef1234567890ABCDEF12345678",
-            mnemonicFilePath: "/tmp/test-mnemonic.txt",
-          },
-          market: {
-            venue: "hyperliquid",
-            mode: "perp",
-            marketId: "perps:hyperliquid:ETH",
-            symbol: "ETH",
-          },
-        }),
-        liveTradingConsent: {
-          acknowledged: true,
-          acknowledgedAt: "2026-03-27T12:00:00.000Z",
-        },
-      };
-
       const service = new DaemonService(
         stubDaemonDeps({
           readState: async () => state,
-          updateState: async (updater) => {
-            state = updater(state);
-            return state;
-          },
+          updateState: async (updater) => updater(state),
         }),
       );
 
-      const result = await service.startTrading();
-      expect(result.daemonStatus).toBe("running");
-      expect(result.haltReason).toBeNull();
-      expect(result.network).toBe("mainnet");
+      await expect(service.startTrading()).rejects.toThrow(LiveTradingConsentRequiredError);
+      await expect(service.startTrading()).rejects.toThrow("acknowledge_live_trading");
     } finally {
       restoreEnv("HL_NETWORK", originalHlNetwork);
       restoreEnv("HL_TESTNET", originalHlTestnet);
@@ -597,7 +548,7 @@ describe("mnemonic lifecycle state readiness", () => {
     const archived = parseRuntimeState({
       wallet: {
         address: "0x1234567890abcdef1234567890ABCDEF12345678",
-        mnemonicFilePath: "/tmp/test-mnemonic.txt",
+        privateKey: "0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
       },
       vibe4tradingToken: null,
       market: {
@@ -790,6 +741,7 @@ describe("mnemonic cleanup: succeeds after backup confirmation", () => {
 
     const result = await cleanup_mnemonic_file({
       action: "archive",
+      path: mnemonicPath,
       stateFilePath: statePath,
     });
 
@@ -817,6 +769,7 @@ describe("mnemonic cleanup: succeeds after backup confirmation", () => {
 
     const result = await cleanup_mnemonic_file({
       action: "delete",
+      path: mnemonicPath,
       stateFilePath: statePath,
     });
 
@@ -835,10 +788,11 @@ describe("mnemonic cleanup: succeeds after backup confirmation", () => {
   });
 
   it("lifecycle state survives restart after archive", async () => {
-    const { statePath } = await createAndConfirmWallet(tmpDir);
+    const { mnemonicPath, statePath } = await createAndConfirmWallet(tmpDir);
 
     await cleanup_mnemonic_file({
       action: "archive",
+      path: mnemonicPath,
       stateFilePath: statePath,
     });
 
@@ -867,7 +821,7 @@ describe("mnemonic cleanup: succeeds after backup confirmation", () => {
     rmSync(mnemonicPath);
 
     await expect(
-      cleanup_mnemonic_file({ action: "archive", stateFilePath: statePath }),
+      cleanup_mnemonic_file({ action: "archive", path: mnemonicPath, stateFilePath: statePath }),
     ).rejects.toThrow("Mnemonic file not found");
   });
 
@@ -877,7 +831,7 @@ describe("mnemonic cleanup: succeeds after backup confirmation", () => {
     chmodSync(mnemonicPath, 0o644);
 
     await expect(
-      cleanup_mnemonic_file({ action: "archive", stateFilePath: statePath }),
+      cleanup_mnemonic_file({ action: "archive", path: mnemonicPath, stateFilePath: statePath }),
     ).rejects.toThrow("expected 600");
 
     expect(existsSync(mnemonicPath)).toBe(true);
@@ -892,7 +846,7 @@ describe("mnemonic cleanup: succeeds after backup confirmation", () => {
     chmodSync(mnemonicPath, 0o755);
 
     await expect(
-      cleanup_mnemonic_file({ action: "delete", stateFilePath: statePath }),
+      cleanup_mnemonic_file({ action: "delete", path: mnemonicPath, stateFilePath: statePath }),
     ).rejects.toThrow("expected 600");
 
     expect(existsSync(mnemonicPath)).toBe(true);
@@ -908,7 +862,7 @@ describe("status snapshot exposes walletBackup lifecycle", () => {
       ...createRuntimeState({
         wallet: {
           address: "0x1234567890abcdef1234567890ABCDEF12345678",
-          mnemonicFilePath: "/tmp/test-mnemonic.txt",
+          privateKey: `0x${"ab".repeat(32)}`,
         },
         market: {
           venue: "hyperliquid",
@@ -947,7 +901,7 @@ describe("status snapshot exposes walletBackup lifecycle", () => {
     const state = createRuntimeState({
       wallet: {
         address: "0x1234567890abcdef1234567890ABCDEF12345678",
-        mnemonicFilePath: "/tmp/test-mnemonic.txt",
+        privateKey: `0x${"ab".repeat(32)}`,
       },
       market: {
         venue: "hyperliquid",

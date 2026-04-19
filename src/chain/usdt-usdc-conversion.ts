@@ -6,7 +6,7 @@ import {
   isAddress,
   parseUnits,
 } from "viem";
-import { mnemonicToAccount } from "viem/accounts";
+import { privateKeyToAccount } from "viem/accounts";
 import { arbitrum } from "viem/chains";
 
 import {
@@ -205,7 +205,7 @@ export type UsdtToUsdcConversionDeps = {
 
 export type ArbitrumUsdtToUsdcConversionExecutorConfig = {
   readonly client: ArbitrumClient;
-  readonly readMnemonic: () => Promise<string>;
+  readonly privateKey: string;
 };
 
 export async function getUsdtBalance(
@@ -441,29 +441,12 @@ export function createArbitrumUsdtToUsdcConversionExecutor(
   config: ArbitrumUsdtToUsdcConversionExecutorConfig,
 ): (input: UsdtToUsdcConversionRequest) => Promise<UsdtToUsdcConversionResult> {
   return async (input) => {
-    let walletContextPromise: Promise<{
-      readonly walletClient: ReturnType<typeof createWalletClient>;
-      readonly account: ReturnType<typeof mnemonicToAccount>;
-    }> | null = null;
-
-    const getWalletContext = async () => {
-      if (walletContextPromise === null) {
-        walletContextPromise = (async () => {
-          const mnemonic = (await config.readMnemonic()).trim();
-          const account = mnemonicToAccount(mnemonic);
-          return {
-            account,
-            walletClient: createWalletClient({
-              account,
-              chain: arbitrum,
-              transport: http(config.client.rpcUrl),
-            }),
-          };
-        })();
-      }
-
-      return walletContextPromise;
-    };
+    const account = privateKeyToAccount(config.privateKey as `0x${string}`);
+    const walletClient = createWalletClient({
+      account,
+      chain: arbitrum,
+      transport: http(config.client.rpcUrl),
+    });
 
     return convertUsdtToUsdc(
       {
@@ -471,7 +454,6 @@ export function createArbitrumUsdtToUsdcConversionExecutor(
         quoteExactInputSingle: async (amountInRaw) =>
           (await quoteUsdtToUsdcExactInput(config.client, amountInRaw)).quotedAmountOutRaw,
         sendUsdtApprove: async (spender, amount) => {
-          const { walletClient, account } = await getWalletContext();
           return walletClient.sendTransaction({
             account,
             chain: arbitrum,
@@ -485,7 +467,6 @@ export function createArbitrumUsdtToUsdcConversionExecutor(
           });
         },
         sendExactInputSingle: async (params) => {
-          const { walletClient, account } = await getWalletContext();
           return walletClient.sendTransaction({
             account,
             chain: arbitrum,

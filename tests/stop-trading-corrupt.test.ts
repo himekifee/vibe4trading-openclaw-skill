@@ -30,7 +30,7 @@ function stubDaemonDeps(overrides: Partial<DaemonDeps> = {}): DaemonDeps {
   const defaultState = createRuntimeState({
     wallet: {
       address: "0x1234567890abcdef1234567890ABCDEF12345678",
-      mnemonicFilePath: "/tmp/test-mnemonic.txt",
+      privateKey: `0x${"ab".repeat(32)}`,
     },
     market: {
       venue: "hyperliquid",
@@ -268,10 +268,10 @@ describe("stop_trading tool: PARSE_ERROR → corruptState result", () => {
     expect(result.emergencyCleanup).toBeNull();
   });
 
-  it("attempts emergency cleanup when wallet address and mnemonic are recoverable", async () => {
+  it("attempts emergency cleanup when wallet address and privateKey are recoverable", async () => {
     vi.mocked(readRawRuntimeStateFile).mockResolvedValue({
       walletAddress: "0xABCD",
-      mnemonicFilePath: "/tmp/m.txt",
+      privateKey: `0x${"ab".repeat(32)}`,
       marketId: "perps:hyperliquid:ETH",
       marketSymbol: "ETH",
     });
@@ -289,10 +289,10 @@ describe("stop_trading tool: PARSE_ERROR → corruptState result", () => {
         clearDeadManAttempted: boolean;
         errors: readonly string[];
       };
-      recoveredInfo: { walletAddress: string; mnemonicFilePath: string };
+      recoveredInfo: { walletAddress: string; privateKey: string };
     };
 
-    expect(emergencyCancelAndClearDeadMan).toHaveBeenCalledWith("0xABCD", "/tmp/m.txt");
+    expect(emergencyCancelAndClearDeadMan).toHaveBeenCalledWith("0xABCD", `0x${"ab".repeat(32)}`);
     expect(result.emergencyCleanup).toMatchObject({
       cancelAttempted: true,
       cancelledCount: 1,
@@ -300,14 +300,14 @@ describe("stop_trading tool: PARSE_ERROR → corruptState result", () => {
     });
     expect(result.recoveredInfo).toMatchObject({
       walletAddress: "0xABCD",
-      mnemonicFilePath: "/tmp/m.txt",
+      privateKey: `0x${"ab".repeat(32)}`,
     });
   });
 
   it("tolerates emergency cleanup failure and still returns corruptState result", async () => {
     vi.mocked(readRawRuntimeStateFile).mockResolvedValue({
       walletAddress: "0xABCD",
-      mnemonicFilePath: "/tmp/m.txt",
+      privateKey: `0x${"ab".repeat(32)}`,
       marketId: null,
       marketSymbol: null,
     });
@@ -322,10 +322,10 @@ describe("stop_trading tool: PARSE_ERROR → corruptState result", () => {
     expect(result.emergencyCleanup).toBeNull();
   });
 
-  it("skips cleanup when walletAddress present but mnemonicFilePath missing", async () => {
+  it("skips cleanup when walletAddress present but privateKey missing", async () => {
     vi.mocked(readRawRuntimeStateFile).mockResolvedValue({
       walletAddress: "0xABCD",
-      mnemonicFilePath: null,
+      privateKey: null,
       marketId: null,
       marketSymbol: null,
     });

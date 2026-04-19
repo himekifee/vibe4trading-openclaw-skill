@@ -44,6 +44,26 @@
       }
     },
     {
+      "name": "recover_from_mnemonic",
+      "description": "Recover a wallet from a backed-up mnemonic phrase. The operator provides the 12-24 BIP-39 words they previously backed up externally. Validates the mnemonic, derives the wallet address, writes the mnemonic file, and initializes runtime state. When no state exists: creates fresh state with backup status confirmed. When state exists and the address matches: re-writes the mnemonic file. When state exists with a different address: refuses to overwrite.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "mnemonic": {
+            "type": "string",
+            "description": "The BIP-39 mnemonic phrase (12-24 words) from the operator's external backup.",
+            "minLength": 1
+          },
+          "path": {
+            "type": "string",
+            "description": "Override mnemonic file path (default: ~/Desktop/openclaw-v4t-wallet-mnemonic.txt)."
+          }
+        },
+        "required": ["mnemonic"],
+        "additionalProperties": false
+      }
+    },
+    {
       "name": "get_onboarding_status",
       "description": "Check wallet funding status: combined USDC + USDT stablecoin balance, ETH gas, bridge cap headroom, and readiness to deposit. Returns bootstrap guidance when runtime state has not been initialized yet. USDT shortfall is auto-converted to USDC before bridging.",
       "inputSchema": {
@@ -314,6 +334,10 @@
             "type": "string",
             "enum": ["archive", "delete"],
             "description": "Either \"archive\" (rename with timestamp suffix) or \"delete\" (permanent removal)."
+          },
+          "path": {
+            "type": "string",
+            "description": "Override mnemonic file path (default: ~/Desktop/openclaw-v4t-wallet-mnemonic.txt)."
           }
         },
         "required": ["action"],

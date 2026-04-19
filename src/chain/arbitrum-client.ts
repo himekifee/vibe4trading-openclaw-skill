@@ -9,7 +9,7 @@ import {
   isAddress,
   parseUnits,
 } from "viem";
-import { mnemonicToAccount } from "viem/accounts";
+import { privateKeyToAccount } from "viem/accounts";
 import { arbitrum } from "viem/chains";
 
 import { ARBITRUM_USDC_ADDRESS as ARBITRUM_USDC_CONFIG_ADDRESS } from "../config/constants";
@@ -146,11 +146,11 @@ export async function estimateBridgeGas(
 
 export async function submitBridgeTransfer(
   client: ArbitrumClient,
-  mnemonic: string,
+  privateKey: string,
   _address: string,
   amountUsdc: string,
 ): Promise<{ txHash: string }> {
-  const account = mnemonicToAccount(mnemonic);
+  const account = privateKeyToAccount(privateKey as `0x${string}`);
   const walletClient = createWalletClient({
     account,
     chain: arbitrum,

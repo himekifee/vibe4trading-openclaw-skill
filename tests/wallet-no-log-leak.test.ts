@@ -32,7 +32,7 @@ describe("wallet-no-log-leak", () => {
     const state = createRuntimeState({
       wallet: {
         address: result.address,
-        mnemonicFilePath: result.mnemonicFilePath,
+        privateKey: result.privateKey,
       },
       market: {
         venue: "hyperliquid",
@@ -53,7 +53,7 @@ describe("wallet-no-log-leak", () => {
     }
 
     expect(serialized).toContain(result.address);
-    expect(serialized).toContain(result.mnemonicFilePath);
+    expect(serialized).toContain(result.privateKey);
   });
 
   it("console.log is never called with mnemonic content during wallet creation", () => {
@@ -136,16 +136,16 @@ describe("wallet-no-log-leak", () => {
     expect(() => confirmBackup(confirmed)).toThrow("already been confirmed");
   });
 
-  it("WalletState type carries only address and path, never mnemonic", () => {
+  it("WalletState type carries only address and privateKey, never mnemonic", () => {
     const targetPath = join(tmpDir, "mnemonic.txt");
     const result = createWallet(targetPath);
 
     const walletState = {
       address: result.address,
-      mnemonicFilePath: result.mnemonicFilePath,
+      privateKey: `0x${"ab".repeat(32)}`,
     };
 
-    expect(Object.keys(walletState)).toEqual(["address", "mnemonicFilePath"]);
+    expect(Object.keys(walletState)).toEqual(["address", "privateKey"]);
     expect(JSON.stringify(walletState)).not.toContain(result.mnemonic);
   });
 });

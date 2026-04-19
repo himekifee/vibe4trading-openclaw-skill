@@ -22,7 +22,7 @@ import type { RuntimeState } from "../src/state/runtime-state";
 
 function makeState(overrides: Partial<RuntimeState> = {}): RuntimeState {
   return {
-    wallet: { address: "0x1234567890abcdef1234567890abcdef12345678", mnemonicFilePath: "/tmp/m" },
+    wallet: { address: "0x1234567890abcdef1234567890abcdef12345678", privateKey: `0x${"ab".repeat(32)}` },
     vibe4tradingToken: null,
     market: {
       venue: "hyperliquid",

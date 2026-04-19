@@ -21,7 +21,7 @@ function makeTestState(
   return createRuntimeState({
     wallet: {
       address: "0x1234567890abcdef1234567890ABCDEF12345678",
-      mnemonicFilePath: "/tmp/test-mnemonic.txt",
+      privateKey: `0x${"ab".repeat(32)}`,
     },
     market: {
       venue: "hyperliquid",
@@ -336,7 +336,7 @@ describe("daemon/runtime-state-file", () => {
       const result = await readRawRuntimeStateFile(filePath);
       if (result === null) throw new Error("expected non-null");
       expect(result.walletAddress).toBe("0x1234567890abcdef1234567890ABCDEF12345678");
-      expect(result.mnemonicFilePath).toBe("/tmp/test-mnemonic.txt");
+      expect(result.privateKey).toBe(`0x${"ab".repeat(32)}`);
       expect(result.marketId).toBe("perps:hyperliquid:ETH");
       expect(result.marketSymbol).toBe("ETH");
     });
@@ -346,7 +346,7 @@ describe("daemon/runtime-state-file", () => {
       const partialJson = JSON.stringify({
         wallet: {
           address: "0xAABBCCDDEE1234567890aabbccddeeff12345678",
-          mnemonicFilePath: "/tmp/mnemonic.txt",
+          privateKey: `0x${"ab".repeat(32)}`,
         },
         market: { marketId: "perps:hyperliquid:BTC", symbol: "BTC" },
         badField: "causes schema validation to fail",
@@ -356,7 +356,7 @@ describe("daemon/runtime-state-file", () => {
       const result = await readRawRuntimeStateFile(filePath);
       if (result === null) throw new Error("expected non-null");
       expect(result.walletAddress).toBe("0xAABBCCDDEE1234567890aabbccddeeff12345678");
-      expect(result.mnemonicFilePath).toBe("/tmp/mnemonic.txt");
+      expect(result.privateKey).toBe(`0x${"ab".repeat(32)}`);
       expect(result.marketId).toBe("perps:hyperliquid:BTC");
       expect(result.marketSymbol).toBe("BTC");
     });
@@ -368,7 +368,7 @@ describe("daemon/runtime-state-file", () => {
       const result = await readRawRuntimeStateFile(filePath);
       if (result === null) throw new Error("expected non-null");
       expect(result.walletAddress).toBeNull();
-      expect(result.mnemonicFilePath).toBeNull();
+      expect(result.privateKey).toBeNull();
       expect(result.marketId).toBeNull();
       expect(result.marketSymbol).toBeNull();
     });
@@ -389,7 +389,7 @@ describe("daemon/runtime-state-file", () => {
       const result = await readRawRuntimeStateFile(filePath);
       if (result === null) throw new Error("expected non-null");
       expect(result.walletAddress).toBeNull();
-      expect(result.mnemonicFilePath).toBeNull();
+      expect(result.privateKey).toBeNull();
     });
   });
 

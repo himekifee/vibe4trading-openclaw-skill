@@ -20,6 +20,7 @@ import {
   get_tick_context,
   get_trade_history,
   get_trading_options,
+  recover_from_mnemonic,
   recover_mnemonic,
   reset_override_phrase,
   set_trading_selection,
@@ -146,6 +147,30 @@ const TOOL_INVOKERS: Record<string, ToolInvoker> = {
       warning: "This is a deliberate local recovery from the desktop file. Store securely.",
     };
   },
+  recover_from_mnemonic: async (args) => {
+    const mnemonic = args.mnemonic as string;
+    if (typeof mnemonic !== "string" || mnemonic.trim().length === 0) {
+      throw new Error("recover_from_mnemonic requires a non-empty mnemonic string.");
+    }
+
+    const result = await recover_from_mnemonic({
+      mnemonic,
+      path: args.path as string | undefined,
+    });
+
+    if ("walletAlreadyExists" in result) {
+      return result;
+    }
+
+    return {
+      recovered: result.recovered,
+      walletAddress: result.walletAddress,
+      mnemonicFilePath: result.mnemonicFilePath,
+      message: result.message,
+      warning:
+        "Wallet recovered from your backed-up mnemonic. The mnemonic file has been written to disk. Store it securely.",
+    };
+  },
   get_onboarding_status: async () => get_onboarding_status(),
   deposit_to_hyperliquid: async (args) =>
     deposit_to_hyperliquid({ amountUsdc: args.amountUsdc as string | undefined }),
@@ -174,7 +199,7 @@ const TOOL_INVOKERS: Record<string, ToolInvoker> = {
     if (action !== "archive" && action !== "delete") {
       throw new Error(`Invalid cleanup_mnemonic_file action: ${String(action)}`);
     }
-    return cleanup_mnemonic_file({ action });
+    return cleanup_mnemonic_file({ action, path: args.path as string | undefined });
   },
 };
 

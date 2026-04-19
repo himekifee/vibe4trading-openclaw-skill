@@ -1,5 +1,3 @@
-import { readFile } from "node:fs/promises";
-
 import {
   confirmBridgeTransfer,
   createArbitrumClient,
@@ -32,14 +30,9 @@ export async function deposit_to_hyperliquid(args: { amountUsdc?: string }) {
   const arbitrumClient = createArbitrumClient();
   const convertUsdtToUsdc = createArbitrumUsdtToUsdcConversionExecutor({
     client: arbitrumClient,
-    readMnemonic: async () => readFile(state.wallet.mnemonicFilePath, "utf8"),
+    privateKey: state.wallet.privateKey,
   });
 
-  // Security: mnemonic is read lazily inside submitBridgeTransfer, only after
-  // all preflight checks pass. This minimizes the window during which the
-  // mnemonic string exists in process memory.
-  // NOTE: JS strings are immutable and not explicitly zeroable; the best we
-  // can do is limit lifetime so GC can reclaim the interned copy sooner.
   const deps: DepositDeps = {
     getUsdcBalance: async (address) => getUsdcBalance(arbitrumClient, address),
     getUsdtBalance: async (address) => getUsdtBalance(arbitrumClient, address),
@@ -48,8 +41,7 @@ export async function deposit_to_hyperliquid(args: { amountUsdc?: string }) {
       estimateBridgeGas(arbitrumClient, address, amountUsdc),
     convertUsdtToUsdc,
     submitBridgeTransfer: async (address, amountUsdc) => {
-      const mnemonic = (await readFile(state.wallet.mnemonicFilePath, "utf8")).trim();
-      return submitBridgeTransfer(arbitrumClient, mnemonic, address, amountUsdc);
+      return submitBridgeTransfer(arbitrumClient, state.wallet.privateKey, address, amountUsdc);
     },
     confirmBridgeTransfer: async (txHash) => confirmBridgeTransfer(arbitrumClient, txHash),
     persistState: async (preSubmitState) => {

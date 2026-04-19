@@ -9,7 +9,7 @@ function createBaseRuntimeState() {
   return createRuntimeState({
     wallet: {
       address: "0x1234567890abcdef1234567890ABCDEF12345678",
-      mnemonicFilePath: "/home/grider/Desktop/openclaw-v4t-wallet-mnemonic.txt",
+      privateKey: `0x${"ab".repeat(32)}`,
     },
     market: {
       venue: "hyperliquid",
@@ -185,10 +185,10 @@ describe("policy", () => {
 
   it("holds when market mode is spot and suggestion side is short", () => {
     const spotRuntime = createRuntimeState({
-      wallet: {
-        address: "0x1234567890abcdef1234567890ABCDEF12345678",
-        mnemonicFilePath: "/home/grider/Desktop/openclaw-v4t-wallet-mnemonic.txt",
-      },
+        wallet: {
+          address: "0x1234567890abcdef1234567890ABCDEF12345678",
+          privateKey: `0x${"ab".repeat(32)}`,
+        },
       market: {
         venue: "hyperliquid",
         mode: "spot",

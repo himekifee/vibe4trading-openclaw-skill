@@ -15,7 +15,7 @@ function makeState(overrides: Partial<RuntimeState> = {}): RuntimeState {
   return {
     wallet: {
       address: "0x1234567890abcdef1234567890ABCDEF12345678",
-      mnemonicFilePath: "/home/grider/Desktop/openclaw-v4t-wallet-mnemonic.txt",
+      privateKey: `0x${"ab".repeat(32)}`,
     },
     vibe4tradingToken: "token",
     market: {

@@ -31,7 +31,7 @@ export class StateReadError extends Error {
  */
 export type RawRecoveredState = {
   readonly walletAddress: string | null;
-  readonly mnemonicFilePath: string | null;
+  readonly privateKey: string | null;
   readonly marketId: string | null;
   readonly marketSymbol: string | null;
 };
@@ -55,18 +55,18 @@ export async function readRawRuntimeStateFile(
   try {
     const parsed: unknown = JSON.parse(rawText);
     if (typeof parsed !== "object" || parsed === null || Array.isArray(parsed)) {
-      return { walletAddress: null, mnemonicFilePath: null, marketId: null, marketSymbol: null };
+      return { walletAddress: null, privateKey: null, marketId: null, marketSymbol: null };
     }
     const obj = parsed as Record<string, unknown>;
 
     const walletAddress = extractNestedString(obj, "wallet", "address");
-    const mnemonicFilePath = extractNestedString(obj, "wallet", "mnemonicFilePath");
+    const privateKey = extractNestedString(obj, "wallet", "privateKey");
     const marketId = extractNestedString(obj, "market", "marketId");
     const marketSymbol = extractNestedString(obj, "market", "symbol");
 
-    return { walletAddress, mnemonicFilePath, marketId, marketSymbol };
+    return { walletAddress, privateKey, marketId, marketSymbol };
   } catch {
-    return { walletAddress: null, mnemonicFilePath: null, marketId: null, marketSymbol: null };
+    return { walletAddress: null, privateKey: null, marketId: null, marketSymbol: null };
   }
 }
 

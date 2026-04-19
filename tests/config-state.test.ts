@@ -19,7 +19,7 @@ describe("config state", () => {
     const state = createRuntimeState({
       wallet: {
         address: "0x1234567890abcdef1234567890ABCDEF12345678",
-        mnemonicFilePath: "/home/grider/Desktop/openclaw-v4t-wallet-mnemonic.txt",
+        privateKey: `0x${"ab".repeat(32)}`,
       },
       vibe4tradingToken: "v4t-token",
       market: {
@@ -71,7 +71,7 @@ describe("config state", () => {
       {
         wallet: {
           address: "0x1234567890abcdef1234567890ABCDEF12345678",
-          mnemonicFilePath: "/home/grider/Desktop/openclaw-v4t-wallet-mnemonic.txt",
+          privateKey: "0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
         },
         vibe4tradingToken: "v4t-token",
         market: {
@@ -110,7 +110,7 @@ describe("config state", () => {
       {
         wallet: {
           address: "0x1234567890abcdef1234567890ABCDEF12345678",
-          mnemonicFilePath: "/home/grider/Desktop/openclaw-v4t-wallet-mnemonic.txt",
+          privateKey: "0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
         },
         vibe4tradingToken: "v4t-token",
         market: {
@@ -150,7 +150,7 @@ describe("config state", () => {
     const state = createRuntimeState({
       wallet: {
         address: "0x1234567890abcdef1234567890ABCDEF12345678",
-        mnemonicFilePath: "/home/grider/Desktop/openclaw-v4t-wallet-mnemonic.txt",
+        privateKey: `0x${"ab".repeat(32)}`,
       },
       market: {
         venue: "hyperliquid",
@@ -205,7 +205,7 @@ describe("config state", () => {
       {
         wallet: {
           address: "0x1234567890abcdef1234567890ABCDEF12345678",
-          mnemonicFilePath: "/home/grider/Desktop/openclaw-v4t-wallet-mnemonic.txt",
+          privateKey: "0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
         },
         vibe4tradingToken: "v4t-token",
         market: {
@@ -330,7 +330,7 @@ active
       {
         wallet: {
           address: "0x1234567890abcdef1234567890ABCDEF12345678",
-          mnemonicFilePath: "/home/grider/Desktop/openclaw-v4t-wallet-mnemonic.txt",
+          privateKey: "0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
         },
         vibe4tradingToken: "v4t-token",
         market: {
@@ -405,7 +405,7 @@ active
     const state = createRuntimeState({
       wallet: {
         address: "0x1234567890abcdef1234567890ABCDEF12345678",
-        mnemonicFilePath: "/home/grider/Desktop/openclaw-v4t-wallet-mnemonic.txt",
+        privateKey: `0x${"ab".repeat(32)}`,
       },
       market: {
         venue: "hyperliquid",

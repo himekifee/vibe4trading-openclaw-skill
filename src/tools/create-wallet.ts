@@ -84,7 +84,7 @@ export async function create_wallet(args: {
   const runtimeState = createRuntimeState({
     wallet: {
       address: wallet.address,
-      mnemonicFilePath: wallet.mnemonicFilePath,
+      privateKey: wallet.privateKey,
     },
     market: BOOTSTRAP_MARKET,
     daemonStatus: "stopped",

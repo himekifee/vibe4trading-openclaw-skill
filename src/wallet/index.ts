@@ -13,4 +13,5 @@ export {
   assertFilePermissions,
   createWallet,
   deriveAddressFromMnemonic,
+  derivePrivateKeyFromMnemonic,
 } from "./wallet-create";

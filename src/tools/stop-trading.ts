@@ -37,11 +37,11 @@ async function attemptCorruptStateCleanup(): Promise<CorruptStateResult> {
   const rawState = await readRawRuntimeStateFile();
 
   let emergencyCleanup: EmergencyCleanupResult | null = null;
-  if (rawState?.walletAddress && rawState.mnemonicFilePath) {
+  if (rawState?.walletAddress && rawState.privateKey) {
     try {
       emergencyCleanup = await emergencyCancelAndClearDeadMan(
         rawState.walletAddress,
-        rawState.mnemonicFilePath,
+        rawState.privateKey,
       );
     } catch (cleanupError) {
       console.error(`stop_trading: emergency cleanup threw unexpectedly — ${String(cleanupError)}`);

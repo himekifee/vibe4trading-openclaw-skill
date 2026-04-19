@@ -174,7 +174,7 @@ Before every tick, the skill reconciles local state against live Hyperliquid exc
 
 ## Tool Surface
 
-The skill exposes eighteen tools through `src/tools/`:
+The skill exposes nineteen tools through `src/tools/`:
 
 ### Wallet & Setup
 
@@ -183,6 +183,7 @@ The skill exposes eighteen tools through `src/tools/`:
 | `create_wallet` | Create a BIP-39 wallet, display the mnemonic exactly once. Call `confirm_backup` after recording it. |
 | `confirm_backup` | Confirm mnemonic backup. After confirmation, `create_wallet` will not display the mnemonic again. |
 | `recover_mnemonic` | Deliberate local recovery: re-read the mnemonic from the desktop file (requires 0600 permissions). Refused when backup status is `"archived"` or `"deleted"`. |
+| `recover_from_mnemonic` | Disaster recovery: restore a wallet from a backed-up 12-24 word BIP-39 mnemonic provided by the operator. Validates the mnemonic, derives the address and private key, writes the mnemonic file, and initializes runtime state. When no state exists: creates fresh state with backup status `"confirmed"`. When state exists and the address matches: re-writes the mnemonic file and updates the private key. When state exists with a different address: refuses to overwrite. Accepts `{ mnemonic: string, path?: string }`. |
 | `set_v4t_token` | Persist or clear the vibe4trading bot token in runtime state for suggestion API authentication. |
 | `cleanup_mnemonic_file` | Securely archive or permanently delete the mnemonic file after backup confirmation. Accepts `{ action: "archive" \| "delete" }`. Rejected until `walletBackup.status` is `"confirmed"`. Returns bootstrap guidance when runtime state is missing. See **Mnemonic Cleanup** below. |
 
@@ -229,6 +230,7 @@ The cleanup tool is blocked until `walletBackup.status` reaches `"confirmed"`. A
 - After **archive**, the mnemonic can still be recovered from the `.archived-*` file on disk.
 - After **delete**, the mnemonic is gone from the local filesystem. Recovery is only possible if you backed it up externally.
 - `recover_mnemonic` reads from the original mnemonic path and will fail after either cleanup action.
+- `recover_from_mnemonic` can restore the wallet at any time if you still have your backed-up 12-24 words, regardless of cleanup status. It re-writes the mnemonic file, persists the derived private key, and resets backup status to `"confirmed"`.
 
 ## MCP Registration
 
@@ -248,7 +250,7 @@ The `mcp.json` manifest is the single source of truth for the tool surface: the 
 
 Do not put a literal `~` or relative path into `command` / `args`: MCP hosts (OpenCode, OpenClaw Gateway) launch the command directly rather than through a shell, so `~` is not expanded and a relative path resolves against the host's CWD, not the skill directory. Resolve the home directory and produce an absolute path at registration time. After registering an MCP server mid-session, the current session's tool list will not refresh — start a new session (or wait for the next cron-fired session) to see the tools.
 
-The server exposes all eighteen tools listed above. The wallet creation flow persists backup lifecycle state in `runtime/state.json`, enabling restart-safe one-time mnemonic display and confirmation semantics across separate MCP server processes. Tool call results are returned in the MCP `content` array format. No external MCP SDK dependency is required.
+The server exposes all nineteen tools listed above. The wallet creation flow persists backup lifecycle state in `runtime/state.json`, enabling restart-safe one-time mnemonic display and confirmation semantics across separate MCP server processes. Tool call results are returned in the MCP `content` array format. No external MCP SDK dependency is required.
 
 ## Audit Trail
 

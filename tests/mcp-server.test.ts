@@ -198,6 +198,7 @@ describe("MCP tools/list", () => {
       "create_wallet",
       "confirm_backup",
       "recover_mnemonic",
+      "recover_from_mnemonic",
       "get_onboarding_status",
       "deposit_to_hyperliquid",
       "reset_override_phrase",
@@ -609,7 +610,7 @@ describe("MCP tools/call routing", () => {
     const state = createRuntimeState({
       wallet: {
         address: "0x1234567890abcdef1234567890ABCDEF12345678",
-        mnemonicFilePath: "/tmp/openclaw-v4t-wallet-mnemonic.txt",
+        privateKey: `0x${"ab".repeat(32)}`,
       },
       market: {
         venue: "hyperliquid",
@@ -704,7 +705,7 @@ describe("MCP operator-control tools", () => {
     return createRuntimeState({
       wallet: {
         address: "0x1234567890abcdef1234567890ABCDEF12345678",
-        mnemonicFilePath: "/tmp/openclaw-v4t-wallet-mnemonic.txt",
+        privateKey: `0x${"ab".repeat(32)}`,
       },
       market: TEST_MARKET,
       ...overrides,

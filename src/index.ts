@@ -875,7 +875,7 @@ function createSmokeRuntimeState(overrides: Partial<RuntimeState> = {}): Runtime
   return createRuntimeState({
     wallet: {
       address: "0x1234567890abcdef1234567890abcdef12345678",
-      mnemonicFilePath: "/tmp/smoke-mnemonic.txt",
+      privateKey: `0x${"ab".repeat(32)}`,
     },
     market: {
       venue: "hyperliquid",

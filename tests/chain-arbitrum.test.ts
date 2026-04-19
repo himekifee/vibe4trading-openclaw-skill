@@ -1,9 +1,9 @@
 import { arbitrum } from "viem/chains";
 import { type MockInstance, afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-const { mockSendTransaction, mockMnemonicToAccount } = vi.hoisted(() => ({
+const { mockSendTransaction, mockPrivateKeyToAccount } = vi.hoisted(() => ({
   mockSendTransaction: vi.fn<(...args: unknown[]) => Promise<string>>(),
-  mockMnemonicToAccount: vi.fn(),
+  mockPrivateKeyToAccount: vi.fn(),
 }));
 
 vi.mock("viem", async (importOriginal) => {
@@ -15,7 +15,7 @@ vi.mock("viem", async (importOriginal) => {
 });
 
 vi.mock("viem/accounts", () => ({
-  mnemonicToAccount: mockMnemonicToAccount,
+  privateKeyToAccount: mockPrivateKeyToAccount,
 }));
 
 import { TransactionReceiptNotFoundError, createWalletClient } from "viem";
@@ -55,7 +55,7 @@ describe("encodeBridgeTransferData", () => {
 });
 
 describe("submitBridgeTransfer", () => {
-  const TEST_MNEMONIC = "test test test test test test test test test test test junk";
+  const TEST_PRIVATE_KEY = `0x${"ab".repeat(32)}`;
   const TEST_ADDRESS = "0x1234567890abcdef1234567890abcdef12345678";
   const TEST_AMOUNT = "100";
   const FAKE_TX_HASH = "0xdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef";
@@ -71,7 +71,7 @@ describe("submitBridgeTransfer", () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
-    mockMnemonicToAccount.mockReturnValue(FAKE_ACCOUNT);
+    mockPrivateKeyToAccount.mockReturnValue(FAKE_ACCOUNT);
     mockSendTransaction.mockResolvedValue(FAKE_TX_HASH);
   });
 
@@ -79,16 +79,16 @@ describe("submitBridgeTransfer", () => {
     vi.restoreAllMocks();
   });
 
-  it("derives account from mnemonic via mnemonicToAccount", async () => {
+  it("derives account from privateKey via privateKeyToAccount", async () => {
     const client = makeMockClient();
-    await submitBridgeTransfer(client, TEST_MNEMONIC, TEST_ADDRESS, TEST_AMOUNT);
-    expect(mockMnemonicToAccount).toHaveBeenCalledOnce();
-    expect(mockMnemonicToAccount).toHaveBeenCalledWith(TEST_MNEMONIC);
+    await submitBridgeTransfer(client, TEST_PRIVATE_KEY, TEST_ADDRESS, TEST_AMOUNT);
+    expect(mockPrivateKeyToAccount).toHaveBeenCalledOnce();
+    expect(mockPrivateKeyToAccount).toHaveBeenCalledWith(TEST_PRIVATE_KEY);
   });
 
   it("creates wallet client targeting Arbitrum chain with the public client RPC URL", async () => {
     const client = makeMockClient(CUSTOM_RPC);
-    await submitBridgeTransfer(client, TEST_MNEMONIC, TEST_ADDRESS, TEST_AMOUNT);
+    await submitBridgeTransfer(client, TEST_PRIVATE_KEY, TEST_ADDRESS, TEST_AMOUNT);
 
     const mockCreateWallet = createWalletClient as unknown as MockInstance;
     expect(mockCreateWallet).toHaveBeenCalledOnce();
@@ -100,7 +100,7 @@ describe("submitBridgeTransfer", () => {
 
   it("sends transaction with correct bridge contract address, encoded data, and zero value", async () => {
     const client = makeMockClient();
-    await submitBridgeTransfer(client, TEST_MNEMONIC, TEST_ADDRESS, TEST_AMOUNT);
+    await submitBridgeTransfer(client, TEST_PRIVATE_KEY, TEST_ADDRESS, TEST_AMOUNT);
 
     expect(mockSendTransaction).toHaveBeenCalledOnce();
 
@@ -122,7 +122,7 @@ describe("submitBridgeTransfer", () => {
 
   it("returns the transaction hash from sendTransaction on success", async () => {
     const client = makeMockClient();
-    const result = await submitBridgeTransfer(client, TEST_MNEMONIC, TEST_ADDRESS, TEST_AMOUNT);
+    const result = await submitBridgeTransfer(client, TEST_PRIVATE_KEY, TEST_ADDRESS, TEST_AMOUNT);
     expect(result).toEqual({ txHash: FAKE_TX_HASH });
   });
 
@@ -132,7 +132,7 @@ describe("submitBridgeTransfer", () => {
 
     const client = makeMockClient();
     await expect(
-      submitBridgeTransfer(client, TEST_MNEMONIC, TEST_ADDRESS, TEST_AMOUNT),
+      submitBridgeTransfer(client, TEST_PRIVATE_KEY, TEST_ADDRESS, TEST_AMOUNT),
     ).rejects.toThrow("insufficient funds for gas");
   });
 
@@ -142,7 +142,7 @@ describe("submitBridgeTransfer", () => {
       rpcUrl: "https://arb1.arbitrum.io/rpc",
     };
 
-    await submitBridgeTransfer(clientDefaultRpc, TEST_MNEMONIC, TEST_ADDRESS, TEST_AMOUNT);
+    await submitBridgeTransfer(clientDefaultRpc, TEST_PRIVATE_KEY, TEST_ADDRESS, TEST_AMOUNT);
 
     const mockCreateWallet = createWalletClient as unknown as MockInstance;
     expect(mockCreateWallet).toHaveBeenCalledOnce();

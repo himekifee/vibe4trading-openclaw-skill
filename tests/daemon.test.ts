@@ -20,7 +20,7 @@ function createState(overrides: Partial<RuntimeState> = {}): RuntimeState {
   return createRuntimeState({
     wallet: {
       address: "0x1234567890abcdef1234567890ABCDEF12345678",
-      mnemonicFilePath: "/tmp/openclaw-mnemonic.txt",
+      privateKey: `0x${"ab".repeat(32)}`,
     },
     market: {
       venue: "hyperliquid",
