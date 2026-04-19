@@ -83,3 +83,13 @@ export function buildOnboardingBootstrapGuidance(): BootstrapGuidance {
     nextActions: BOOTSTRAP_NEXT_ACTIONS,
   };
 }
+
+export function buildAccountInfoBootstrapGuidance(): BootstrapGuidance {
+  return {
+    bootstrapRequired: true,
+    reason: "runtime-state-missing",
+    message:
+      "Runtime state has not been initialized yet. Call create_wallet first to create the wallet before querying account balances or positions.",
+    nextActions: BOOTSTRAP_NEXT_ACTIONS,
+  };
+}

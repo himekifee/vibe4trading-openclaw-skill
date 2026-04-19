@@ -23,6 +23,8 @@ export type { CreateWalletResult } from "./create-wallet";
 export { confirm_backup } from "./confirm-backup";
 export { get_status } from "./get-status";
 export { get_tick_context } from "./get-tick-context";
+export { get_account_info } from "./get-account-info";
+export type { AccountInfoResult } from "./get-account-info";
 export { recover_mnemonic } from "./recover-mnemonic";
 export { get_onboarding_status } from "./get-onboarding-status";
 export { deposit_to_hyperliquid } from "./deposit-to-hyperliquid";

@@ -218,6 +218,15 @@
       }
     },
     {
+      "name": "get_account_info",
+      "description": "Return structured account balances and positions: Arbitrum wallet balances (USDC, USDT, ETH) and Hyperliquid account state (account equity, margin used, notional position size, per-asset positions, spot balances, open orders). Null values in a section indicate an RPC failure for that data source; other sections remain populated. Returns bootstrap guidance when runtime state has not been initialized yet.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {},
+        "additionalProperties": false
+      }
+    },
+    {
       "name": "get_trade_history",
       "description": "Read recent execution audit entries from the NDJSON log. Entries include retry and reshaping metadata when applicable.",
       "inputSchema": {

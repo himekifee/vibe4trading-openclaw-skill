@@ -207,6 +207,7 @@ describe("MCP tools/list", () => {
       "get_tick_context",
       "execute_tick",
       "get_status",
+      "get_account_info",
       "get_trade_history",
       "acknowledge_live_trading",
       "get_trading_options",

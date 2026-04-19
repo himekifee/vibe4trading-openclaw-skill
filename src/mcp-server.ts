@@ -14,6 +14,7 @@ import {
   create_wallet,
   deposit_to_hyperliquid,
   execute_tick,
+  get_account_info,
   get_onboarding_status,
   get_status,
   get_tick_context,
@@ -155,6 +156,7 @@ const TOOL_INVOKERS: Record<string, ToolInvoker> = {
   get_tick_context: async (args) => get_tick_context(normalizeExecuteTickArgs(args)),
   execute_tick: async (args) => execute_tick(normalizeExecuteTickArgs(args)),
   get_status: async () => get_status(),
+  get_account_info: async () => get_account_info(),
   get_trade_history: async (args) => get_trade_history(args.limit as number | undefined),
   acknowledge_live_trading: async (args) =>
     acknowledge_live_trading({ confirmed: args.confirmed as true }),
