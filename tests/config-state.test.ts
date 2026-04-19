@@ -159,7 +159,7 @@ describe("config state", () => {
         symbol: "BTC-PERP",
       },
       tradingSelection: {
-        optionId: "opt-btc-perp-1",
+        optionId: "BTC-PERP|conservative|openclaw-daemon",
         market: {
           venue: "hyperliquid",
           mode: "perp",
@@ -167,7 +167,6 @@ describe("config state", () => {
           symbol: "BTC-PERP",
         },
         modelKey: "openclaw-daemon",
-        strategyKey: "momentum-v2",
         strategyProfile: "conservative",
         recommendationId: "rec-123",
         sourceAgentMdVersion: "7",
@@ -187,9 +186,8 @@ describe("config state", () => {
 
     const serialized = serializeRuntimeState(state);
     expect(serialized).toContain('"tradingSelection"');
-    expect(serialized).toContain('"optionId": "opt-btc-perp-1"');
+    expect(serialized).toContain('"optionId": "BTC-PERP|conservative|openclaw-daemon"');
     expect(serialized).toContain('"strategyProfile": "conservative"');
-    expect(serialized).toContain('"strategyKey": "momentum-v2"');
     expect(serialized).toContain('"modelKey": "openclaw-daemon"');
     expect(serialized).toContain('"recommendationId": "rec-123"');
     expect(serialized).toContain('"sourceAgentMdVersion": "7"');
@@ -254,11 +252,11 @@ describe("config state", () => {
     });
   });
 
-  it("round-trips agent.md cache serialization", () => {
+  it("round-trips agents.md cache serialization", () => {
     const cacheState = deserializeAgentMdCacheState(
       `${JSON.stringify(
         {
-          url: "https://vibe4trading.ai/agent.md",
+          url: "https://vibe4trading.ai/agents.md",
           version: "7",
           lastUpdated: "2026-03-27T11:00:00.000Z",
           apiContractVersion: "2",
@@ -279,7 +277,7 @@ describe("config state", () => {
     expect(deserializeAgentMdCacheState(serialized)).toEqual(cacheState);
   });
 
-  it("round-trips agent.md cache serialization with trading options catalog", () => {
+  it("round-trips agents.md cache serialization with trading options catalog", () => {
     const cacheState = createAgentMdCacheState({
       markdown: `---
 version: 8
@@ -294,22 +292,21 @@ status: active
 
 \`\`\`json
 {
-  "options": [
+  "models": ["openclaw-daemon"],
+  "strategies": ["balanced"],
+  "pairs": [
     {
-      "id": "btc-balanced",
-      "market": {
-        "venue": "hyperliquid",
-        "mode": "perp",
-        "marketId": "perps:hyperliquid:BTC-PERP",
-        "symbol": "BTC-PERP"
-      },
-      "modelKey": "openclaw-daemon",
-      "strategyKey": "momentum-v2",
-      "label": "BTC Momentum Balanced",
-      "strategyProfile": "balanced"
+      "venue": "hyperliquid",
+      "mode": "perp",
+      "marketId": "perps:hyperliquid:BTC-PERP",
+      "symbol": "BTC-PERP"
     }
   ],
-  "recommendedOptionId": "btc-balanced"
+  "recommended": {
+    "pair": "BTC-PERP",
+    "strategy": "balanced",
+    "model": "openclaw-daemon"
+  }
 }
 \`\`\`
 
@@ -323,7 +320,8 @@ active
 
     const serialized = serializeAgentMdCacheState(cacheState);
     expect(serialized).toContain('"tradingOptions"');
-    expect(serialized).toContain('"recommendedOptionId": "btc-balanced"');
+    expect(serialized).toContain('"recommended"');
+    expect(serialized).toContain('"pair": "BTC-PERP"');
     expect(deserializeAgentMdCacheState(serialized)).toEqual(cacheState);
   });
 
@@ -355,7 +353,7 @@ active
         },
         haltReason: null,
         tradingSelection: {
-          optionId: "opt-btc-perp-1",
+          optionId: "BTC-PERP|balanced|openclaw-daemon",
           market: {
             venue: "hyperliquid",
             mode: "perp",
@@ -363,7 +361,6 @@ active
             symbol: "BTC-PERP",
           },
           modelKey: "openclaw-daemon",
-          strategyKey: "momentum-v2",
           riskProfile: "balanced",
           recommendationId: null,
           sourceAgentMdVersion: null,

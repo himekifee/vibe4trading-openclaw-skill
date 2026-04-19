@@ -60,11 +60,11 @@ Query parameters:
 
 **Not available in production.** The suggestion endpoint (`GET https://vibe4trading.ai/api/agent/suggestions/latest`) is not currently exposed by vibe4trading. The skill handles this by holding (taking no action) when no suggestion is available. A mock suggestion provider is included for local development and smoke tests.
 
-## agent.md Contract
+## agents.md Contract
 
 ### Expected Contract
 
-**URL:** `https://vibe4trading.ai/agent.md`
+**URL:** `https://vibe4trading.ai/agents.md`
 
 **Purpose:** Structured platform guidance plus the authoritative catalog of selectable trading combinations. Free-form prose may change messaging and warnings, while code-owned safety caps remain final.
 
@@ -110,13 +110,13 @@ Validation rules:
 - `market` is validated with the same `SingleMarketConfig` contract used in code
 - `strategyProfile` must be exactly `aggressive | balanced | conservative`
 
-Legacy `riskProfile` is no longer accepted. Persisted runtime state and cached `agent.md` content must use `strategyProfile`. The HTTP suggestion wire key remains `risk_profile` for backward compatibility with the platform API.
+Legacy `riskProfile` is no longer accepted. Persisted runtime state and cached `agents.md` content must use `strategyProfile`. The HTTP suggestion wire key remains `risk_profile` for backward compatibility with the platform API.
 
 The skill caches this document locally at `runtime/agent-md-cache.json` with ETag-based revalidation. The cache entry stores `url`, `version`, `lastUpdated`, `apiContractVersion`, `status`, `etag`, `hash` (SHA-256 of response body), `fetchedAt`, and the parsed `tradingOptions` catalog.
 
 ### Authority Boundaries
 
-The `agent.md` document can influence:
+The `agents.md` document can influence:
 - `version`, `last_updated`, `api_contract_version`, `status`
 - the selectable trading option catalog in `# Trading Options` (`id`, `market`, `modelKey`, `strategyKey`, `label`, `strategyProfile`, `recommendedOptionId`)
 
@@ -124,7 +124,7 @@ The operator's chosen trading combination (via `set_trading_selection`) is persi
 
 On a bootstrap-fresh repo with no runtime state yet, `get_status`, `get_tick_context`, and `get_onboarding_status` return structured bootstrap guidance instead of failing. `get_onboarding_status` may also reconcile pending bridge transfers on read: if a previously pending bridge transaction has confirmed or failed on-chain, the tool persists the updated transfer state (cumulative totals, bridge history, and pending list) before returning. Mutating flows still require initialized runtime state.
 
-The `agent.md` document **cannot** override:
+The `agents.md` document **cannot** override:
 - Hard safety caps (`MAX_CUMULATIVE_BRIDGE_USD`, `MAX_LEVERAGE`, etc.)
 - Wallet or mnemonic paths
 - Tick cadence or dead-man switch timing
@@ -133,7 +133,7 @@ These boundaries are enforced in `src/config/constants.ts` via `AGENT_MD_AUTHORI
 
 ### Platform Status
 
-**Not available as expected.** The URL `https://vibe4trading.ai/agent.md` currently resolves to a SPA landing page rather than a dedicated Markdown document with YAML frontmatter and the required `# Trading Options` fenced JSON contract. The skill handles this as a degraded state: if the fetch fails or the structured contract is missing/malformed, the cached version (if any) is preserved. If no cache exists, the tick holds.
+**Not available as expected.** The URL `https://vibe4trading.ai/agents.md` currently resolves to a SPA landing page rather than a dedicated Markdown document with YAML frontmatter and the required `# Trading Options` fenced JSON contract. The skill handles this as a degraded state: if the fetch fails or the structured contract is missing/malformed, the cached version (if any) is preserved. If no cache exists, the tick holds.
 
 ## Authentication
 
@@ -164,7 +164,7 @@ The token is stored in `runtime/state.json` as the `vibe4tradingToken` field. It
 | Component | Expected | Current Status |
 |---|---|---|
 | `GET /api/agent/suggestions/latest` | REST endpoint with `Authorization: Bearer` | Not deployed |
-| `agent.md` hosted document | YAML-frontmatter Markdown with required sections | SPA landing, no Markdown content |
+| `agents.md` hosted document | YAML-frontmatter Markdown with required sections | SPA landing, no Markdown content |
 | Bot token issuance | Profile dropdown "COPY BOT TOKEN" | Available |
 | Hyperliquid exchange API | Read/write via `@nktkas/hyperliquid` SDK | Available (mainnet + testnet) |
 | Arbitrum bridge | USDC bridge to Hyperliquid (USDC + USDT funding accepted, auto-conversion) | Available |
@@ -173,6 +173,6 @@ The token is stored in `runtime/state.json` as the `vibe4tradingToken` field. It
 
 ## Versioning
 
-The skill tracks the platform contract `version` from `agent.md` frontmatter. Version changes are logged but do not trigger automatic behavior changes. The skill's own safety limits are version-independent and hard-coded.
+The skill tracks the platform contract `version` from `agents.md` frontmatter. Version changes are logged but do not trigger automatic behavior changes. The skill's own safety limits are version-independent and hard-coded.
 
-Future contract evolution should increment `api_contract_version` in `agent.md` when the suggestion response shape changes, giving the skill a signal to adapt its parser.
+Future contract evolution should increment `api_contract_version` in `agents.md` when the suggestion response shape changes, giving the skill a signal to adapt its parser.

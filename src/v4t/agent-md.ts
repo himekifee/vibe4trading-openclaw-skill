@@ -95,7 +95,7 @@ async function persistAgentMdCache(
   } catch (error) {
     await cleanupTempFile(tempFilePath);
     throw new AgentMdCacheWriteError(
-      `Failed to persist agent.md cache to ${cacheFilePath}: ${error instanceof Error ? error.message : String(error)}`,
+      `Failed to persist agents.md cache to ${cacheFilePath}: ${error instanceof Error ? error.message : String(error)}`,
       { cause: error },
     );
   }
@@ -144,7 +144,7 @@ export async function refreshAgentMdCache(
   return degradedResult(
     "network-error",
     null,
-    lastError instanceof Error ? lastError.message : "agent.md fetch failed.",
+    lastError instanceof Error ? lastError.message : "agents.md fetch failed.",
     cachedState,
   );
 }
@@ -196,7 +196,7 @@ async function processAgentMdResponse(
       return degradedResult(
         "missing-cache",
         response.status,
-        "Received 304 for agent.md without a local cache entry.",
+        "Received 304 for agents.md without a local cache entry.",
         null,
       );
     }
@@ -219,7 +219,7 @@ async function processAgentMdResponse(
     return degradedResult(
       "unexpected-http-status",
       response.status,
-      `Unexpected agent.md HTTP status: ${response.status}.`,
+      `Unexpected agents.md HTTP status: ${response.status}.`,
       cachedState,
     );
   }
@@ -229,7 +229,7 @@ async function processAgentMdResponse(
     return degradedResult(
       "invalid-agent-md",
       response.status,
-      "agent.md response has no frontmatter.",
+      "agents.md response has no frontmatter.",
       cachedState,
     );
   }
@@ -240,7 +240,7 @@ async function processAgentMdResponse(
     return degradedResult(
       "invalid-agent-md",
       response.status,
-      error instanceof Error ? error.message : "agent.md failed validation.",
+      error instanceof Error ? error.message : "agents.md failed validation.",
       cachedState,
     );
   }

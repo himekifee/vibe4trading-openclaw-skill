@@ -35,7 +35,7 @@ function createState(overrides: Partial<RuntimeState> = {}): RuntimeState {
 
 function createTradingSelection() {
   return {
-    optionId: "opt-eth-aggressive",
+    optionId: "ETH|aggressive|agent-model",
     market: {
       venue: "hyperliquid" as const,
       mode: "perp" as const,
@@ -43,7 +43,6 @@ function createTradingSelection() {
       symbol: "ETH",
     },
     modelKey: "agent-model",
-    strategyKey: "momentum-v3",
     strategyProfile: "aggressive" as const,
     recommendationId: "rec-eth-1",
     sourceAgentMdVersion: "7",
@@ -56,7 +55,7 @@ function createAgentMdResult(): AgentMdRefreshResult {
     kind: "updated",
     httpStatus: 200,
     cache: {
-      url: "https://vibe4trading.ai/agent.md",
+      url: "https://vibe4trading.ai/agents.md",
       version: "1",
       lastUpdated: "2026-03-27T12:00:00.000Z",
       apiContractVersion: "1",
@@ -65,22 +64,21 @@ function createAgentMdResult(): AgentMdRefreshResult {
       hash: "hash-1",
       fetchedAt: "2026-03-27T12:31:00.000Z",
       tradingOptions: {
-        recommendedOptionId: "opt-eth-aggressive",
-        options: [
+        models: ["agent-model"],
+        strategies: ["aggressive"],
+        pairs: [
           {
-            id: "opt-eth-aggressive",
-            market: {
-              venue: "hyperliquid",
-              mode: "perp",
-              marketId: "perps:hyperliquid:ETH",
-              symbol: "ETH",
-            },
-            modelKey: "agent-model",
-            strategyKey: "momentum-v3",
-            label: "ETH Momentum",
-            strategyProfile: "aggressive",
+            venue: "hyperliquid",
+            mode: "perp",
+            marketId: "perps:hyperliquid:ETH",
+            symbol: "ETH",
           },
         ],
+        recommended: {
+          pair: "ETH",
+          strategy: "aggressive",
+          model: "agent-model",
+        },
       },
     },
     policy: {
@@ -311,7 +309,7 @@ describe("daemon service", () => {
       apiToken: "mock-token",
       marketId: "perps:hyperliquid:ETH",
       modelKey: "agent-model",
-      strategyKey: "momentum-v3",
+      strategyKey: "aggressive",
     });
     expect(harness.getLastExecutionContext()).toEqual({ orderStyle: "ioc" });
   });
@@ -331,7 +329,7 @@ describe("daemon service", () => {
       },
     });
 
-    expect(context.selection.selection?.optionId).toBe("opt-eth-aggressive");
+    expect(context.selection.selection?.optionId).toBe("ETH|aggressive|agent-model");
     expect(context.selection.validation.status).toBe("validated");
     expect(context.agentMd.status).toBe("active");
     expect(context.onboardingStatus.status).toBe("ready");

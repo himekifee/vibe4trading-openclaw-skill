@@ -1,3 +1,5 @@
+import { buildOptionId } from "../config/agent-md";
+import type { AgentMdStrategyProfile } from "../config/agent-md";
 import { updateRuntimeStateFile } from "../daemon/runtime-state-file";
 import { parseRuntimeState } from "../state";
 import type { TradingSelection } from "../state";
@@ -5,45 +7,62 @@ import { assertMarketConfigChangeAllowed } from "../state/guards";
 import { readAgentMdCache } from "../v4t/agent-md";
 
 export async function set_trading_selection(args: {
-  readonly optionId: string;
+  readonly pair: string;
+  readonly strategy: string;
+  readonly model: string;
 }): Promise<{
   readonly selected: boolean;
   readonly tradingSelection: TradingSelection;
   readonly message: string;
 }> {
-  const { optionId } = args;
+  const { pair, strategy, model } = args;
 
-  if (typeof optionId !== "string" || optionId.length === 0) {
-    throw new Error("optionId must be a non-empty string.");
+  if (typeof pair !== "string" || pair.length === 0) {
+    throw new Error("pair must be a non-empty string.");
+  }
+  if (typeof strategy !== "string" || strategy.length === 0) {
+    throw new Error("strategy must be a non-empty string.");
+  }
+  if (typeof model !== "string" || model.length === 0) {
+    throw new Error("model must be a non-empty string.");
   }
 
   const cache = await readAgentMdCache();
   if (cache === null) {
     throw new Error(
-      "Cannot set trading selection: no agent.md cache found. Trading options are unavailable until agent.md is fetched.",
+      "Cannot set trading selection: no agents.md cache found. Trading options are unavailable until agents.md is fetched.",
     );
   }
 
   if (cache.tradingOptions === null) {
     throw new Error(
-      "Cannot set trading selection: agent.md cache contains no trading options catalog.",
+      "Cannot set trading selection: agents.md cache contains no trading options catalog.",
     );
   }
 
-  const matchingOption = cache.tradingOptions.options.find((option) => option.id === optionId);
-  if (matchingOption === undefined) {
-    const availableIds = cache.tradingOptions.options.map((option) => option.id);
+  const matchingPair = cache.tradingOptions.pairs.find((entry) => entry.symbol === pair);
+  if (matchingPair === undefined) {
+    const availablePairs = cache.tradingOptions.pairs.map((entry) => entry.symbol).join(", ");
+    throw new Error(`Invalid pair "${pair}". Available pairs: ${availablePairs}.`);
+  }
+
+  if (!cache.tradingOptions.strategies.includes(strategy as AgentMdStrategyProfile)) {
+    const availableStrategies = cache.tradingOptions.strategies.join(", ");
     throw new Error(
-      `Invalid optionId "${optionId}". Available options: ${availableIds.join(", ")}.`,
+      `Invalid strategy "${strategy}". Available strategies: ${availableStrategies}.`,
     );
+  }
+
+  if (!cache.tradingOptions.models.includes(model)) {
+    const availableModels = cache.tradingOptions.models.join(", ");
+    throw new Error(`Invalid model "${model}". Available models: ${availableModels}.`);
   }
 
   const selection: TradingSelection = {
-    optionId: matchingOption.id,
-    market: matchingOption.market,
-    modelKey: matchingOption.modelKey,
-    strategyKey: matchingOption.strategyKey,
-    strategyProfile: matchingOption.strategyProfile,
+    optionId: buildOptionId({ pair, strategy, model }),
+    market: matchingPair,
+    modelKey: model,
+    strategyProfile: strategy as AgentMdStrategyProfile,
     recommendationId: null,
     sourceAgentMdVersion: cache.version,
     sourceAgentMdFetchedAt: cache.fetchedAt,
@@ -54,20 +73,20 @@ export async function set_trading_selection(args: {
     // Note: exchangeActivity here reflects the last reconciled snapshot.
     // start_trading / execute_tick reconcile before calling us, so this is
     // as fresh as the persisted state allows for a standalone MCP tool call.
-    if (state.market.marketId !== matchingOption.market.marketId) {
+    if (state.market.marketId !== matchingPair.marketId) {
       assertMarketConfigChangeAllowed(state);
     }
 
     return parseRuntimeState({
       ...state,
       tradingSelection: selection,
-      market: matchingOption.market,
+      market: matchingPair,
     });
   });
 
   return {
     selected: true,
     tradingSelection: updatedState.tradingSelection ?? selection,
-    message: `Trading selection set to "${matchingOption.label}" (${matchingOption.id}).`,
+    message: `Trading selection set to ${pair} / ${strategy} / ${model}.`,
   };
 }

@@ -110,7 +110,7 @@
     },
     {
       "name": "get_tick_context",
-      "description": "Return the current tick preview context: persisted trading selection, onboarding/funding state, hold reasons, agent.md summary, suggestion request/result, and allowed order styles before execution. Returns bootstrap guidance when runtime state has not been initialized yet.",
+      "description": "Return the current tick preview context: persisted trading selection, onboarding/funding state, hold reasons, agents.md summary, suggestion request/result, and allowed order styles before execution. Returns bootstrap guidance when runtime state has not been initialized yet.",
       "inputSchema": {
         "type": "object",
         "properties": {
@@ -249,7 +249,7 @@
     },
     {
       "name": "get_trading_options",
-      "description": "Return available trading options from the cached agent.md catalog. Shows option IDs, labels, markets, models, strategies, and strategy profiles. Use set_trading_selection to choose one.",
+      "description": "Return available trading axes from the cached agents.md catalog: models, strategies, pairs, and the recommended {pair, strategy, model} triplet. Use set_trading_selection to choose one of each.",
       "inputSchema": {
         "type": "object",
         "properties": {},
@@ -258,16 +258,24 @@
     },
     {
       "name": "set_trading_selection",
-      "description": "Set or change the persisted trading selection from the allowed agent.md catalog. Validates the optionId against the cached catalog and persists the selection in runtime state for restart-safe behavior.",
+      "description": "Set or change the persisted trading selection by picking one pair, one strategy, and one model from the cached agents.md catalog. Validates each axis and persists the combined selection in runtime state for restart-safe behavior.",
       "inputSchema": {
         "type": "object",
         "properties": {
-          "optionId": {
+          "pair": {
             "type": "string",
-            "description": "The ID of the trading option to select from the agent.md catalog. Use get_trading_options to see available IDs."
+            "description": "Pair symbol (e.g. BTC-PERP) from the agents.md catalog pairs list."
+          },
+          "strategy": {
+            "type": "string",
+            "description": "Strategy profile (one of aggressive, balanced, conservative) from the agents.md catalog strategies list."
+          },
+          "model": {
+            "type": "string",
+            "description": "Model name from the agents.md catalog models list."
           }
         },
-        "required": ["optionId"],
+        "required": ["pair", "strategy", "model"],
         "additionalProperties": false
       }
     },

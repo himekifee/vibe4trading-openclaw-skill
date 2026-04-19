@@ -183,7 +183,7 @@ Call `get_onboarding_status` again after a minute to confirm balances appear. Wh
 
 ### 5d. Choose a trading combination
 
-Call `get_trading_options`. It returns the catalog defined in section `# Trading Options` below. Show the options to the operator with labels. If the operator has no preference, suggest the option whose `id` matches `recommendedOptionId`. Call `set_trading_selection { optionId: "..." }` with their pick.
+Call `get_trading_options`. It returns the catalog defined in section `# Trading Options` below: `models`, `strategies`, `pairs`, and a `recommended` `{pair, strategy, model}` triplet. Present the axes to the operator and let them pick one of each. If they have no preference, suggest the `recommended` triplet. Call `set_trading_selection { pair, strategy, model }` with their pick.
 
 ### 5e. Second, explicit live-trading confirmation
 
@@ -215,61 +215,33 @@ The installed skill refreshes this document hourly via ETag-revalidated fetch. I
 
 ```json
 {
-  "options": [
+  "models": ["openclaw-daemon", "gpt-5.4", "gemini-3.1-pro-preview"],
+  "strategies": ["aggressive", "balanced", "conservative"],
+  "pairs": [
     {
-      "id": "btc-balanced",
-      "market": {
-        "venue": "hyperliquid",
-        "mode": "perp",
-        "marketId": "perps:hyperliquid:BTC-PERP",
-        "symbol": "BTC-PERP"
-      },
-      "modelKey": "openclaw-daemon",
-      "strategyKey": "momentum-v2",
-      "label": "BTC Perp — Momentum, Balanced",
-      "strategyProfile": "balanced"
+      "venue": "hyperliquid",
+      "mode": "perp",
+      "marketId": "perps:hyperliquid:BTC-PERP",
+      "symbol": "BTC-PERP"
     },
     {
-      "id": "eth-balanced",
-      "market": {
-        "venue": "hyperliquid",
-        "mode": "perp",
-        "marketId": "perps:hyperliquid:ETH-PERP",
-        "symbol": "ETH-PERP"
-      },
-      "modelKey": "openclaw-daemon",
-      "strategyKey": "momentum-v2",
-      "label": "ETH Perp — Momentum, Balanced",
-      "strategyProfile": "balanced"
+      "venue": "hyperliquid",
+      "mode": "perp",
+      "marketId": "perps:hyperliquid:ETH-PERP",
+      "symbol": "ETH-PERP"
     },
     {
-      "id": "btc-conservative",
-      "market": {
-        "venue": "hyperliquid",
-        "mode": "perp",
-        "marketId": "perps:hyperliquid:BTC-PERP",
-        "symbol": "BTC-PERP"
-      },
-      "modelKey": "openclaw-daemon",
-      "strategyKey": "mean-reversion-v1",
-      "label": "BTC Perp — Mean Reversion, Conservative",
-      "strategyProfile": "conservative"
-    },
-    {
-      "id": "sol-aggressive",
-      "market": {
-        "venue": "hyperliquid",
-        "mode": "perp",
-        "marketId": "perps:hyperliquid:SOL-PERP",
-        "symbol": "SOL-PERP"
-      },
-      "modelKey": "openclaw-daemon",
-      "strategyKey": "breakout-v1",
-      "label": "SOL Perp — Breakout, Aggressive",
-      "strategyProfile": "aggressive"
+      "venue": "hyperliquid",
+      "mode": "perp",
+      "marketId": "perps:hyperliquid:SOL-PERP",
+      "symbol": "SOL-PERP"
     }
   ],
-  "recommendedOptionId": "btc-balanced"
+  "recommended": {
+    "pair": "BTC-PERP",
+    "strategy": "balanced",
+    "model": "openclaw-daemon"
+  }
 }
 ```
 

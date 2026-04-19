@@ -2,7 +2,7 @@ import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
 export const REPO_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "../..");
-export const DEFAULT_AGENT_MD_URL = "https://vibe4trading.ai/agent.md" as const;
+export const DEFAULT_AGENT_MD_URL = "https://vibe4trading.ai/agents.md" as const;
 export const DEFAULT_V4T_API_ORIGIN = "https://vibe4trading.ai" as const;
 export const ARBITRUM_UNISWAP_SWAP_ROUTER_02_ADDRESS =
   "0x68b3465833fb72A70ecDF485E0e4C7bD8665Fc45" as const;

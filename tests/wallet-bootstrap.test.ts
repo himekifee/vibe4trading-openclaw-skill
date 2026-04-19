@@ -64,7 +64,7 @@ function stubDaemonDeps(overrides: Partial<DaemonDeps> = {}): DaemonDeps {
         kind: "not-modified",
         httpStatus: 304,
         cache: {
-          url: "https://vibe4trading.ai/agent.md",
+          url: "https://vibe4trading.ai/agents.md",
           version: "1",
           lastUpdated: "2026-03-27T12:00:00.000Z",
           apiContractVersion: "1",

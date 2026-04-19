@@ -503,13 +503,13 @@ export class DaemonService {
       agentMdResult = await this.deps.refreshAgentMd(now);
     } catch (error) {
       console.warn(
-        `getTickContext: agent.md refresh failed — ${toErrorMessage(error)}. Using stale cache.`,
+        `getTickContext: agents.md refresh failed — ${toErrorMessage(error)}. Using stale cache.`,
       );
       agentMdResult = {
         kind: "degraded",
         reason: "network-error",
         httpStatus: null,
-        message: `agent.md refresh failed: ${toErrorMessage(error)}`,
+        message: `agents.md refresh failed: ${toErrorMessage(error)}`,
         cache: null,
         policy: null,
       };
@@ -538,6 +538,16 @@ export class DaemonService {
       executionIntent: normalizedInput.executionIntent,
     });
 
+    const recommended = agentMdResult.cache?.tradingOptions?.recommended ?? null;
+    const recommendedOptionId =
+      recommended === null
+        ? null
+        : `${recommended.pair}|${recommended.strategy}|${recommended.model}`;
+    const agentOptionLabel =
+      selectionResolution.selection === null
+        ? null
+        : `${selectionResolution.selection.market.symbol} / ${selectionResolution.selection.strategyProfile} / ${selectionResolution.selection.modelKey}`;
+
     return {
       currentSlot: normalizedInput.slotId,
       daemonStatus: state.daemonStatus,
@@ -545,8 +555,8 @@ export class DaemonService {
       network: isMainnet() ? "mainnet" : "testnet",
       selection: {
         selection: selectionResolution.selection,
-        recommendedOptionId: agentMdResult.cache?.tradingOptions?.recommendedOptionId ?? null,
-        agentOptionLabel: selectionResolution.option?.label ?? null,
+        recommendedOptionId,
+        agentOptionLabel,
         validation: selectionResolution.validation,
       },
       onboardingStatus,

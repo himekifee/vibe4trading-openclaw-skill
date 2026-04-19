@@ -1,4 +1,5 @@
-import type { AgentMdTradingOption } from "../config/agent-md";
+import { buildOptionId } from "../config/agent-md";
+import type { AgentMdTradingOptionsCatalog } from "../config/agent-md";
 import {
   ALLOWED_ORDER_STYLES,
   DEAD_MANS_SWITCH_SECONDS,
@@ -247,7 +248,7 @@ export function buildSuggestionRequest(
     apiToken: state.vibe4tradingToken,
     marketId: selection.market.marketId,
     modelKey: selection.modelKey,
-    strategyKey: selection.strategyKey,
+    strategyKey: selection.strategyProfile,
   };
 }
 
@@ -259,7 +260,6 @@ export function resolveSelectionValidation(
   if (selection === null) {
     return {
       selection: null,
-      option: null,
       validation: {
         status: "missing",
         reason: "No persisted trading selection is configured.",
@@ -275,7 +275,6 @@ export function resolveSelectionValidation(
   ) {
     return {
       selection,
-      option: null,
       validation: {
         status: "option-mismatch",
         reason:
@@ -287,41 +286,42 @@ export function resolveSelectionValidation(
   if (cache?.tradingOptions === null || cache?.tradingOptions === undefined) {
     return {
       selection,
-      option: null,
       validation: {
         status: "agent-md-unavailable",
-        reason: "agent.md trading options cache is unavailable for selection validation.",
+        reason: "agents.md trading options cache is unavailable for selection validation.",
       },
     };
   }
 
-  const option =
-    cache.tradingOptions.options.find((entry) => entry.id === selection.optionId) ?? null;
-  if (option === null) {
+  const catalog = cache.tradingOptions;
+  const missingAxis = findMissingSelectionAxis(selection, catalog);
+  if (missingAxis !== null) {
     return {
       selection,
-      option: null,
       validation: {
         status: "option-not-found",
-        reason: `Persisted tradingSelection.optionId \"${selection.optionId}\" is not present in agent.md trading options.`,
+        reason: missingAxis,
       },
     };
   }
 
-  if (!selectionMatchesOption(selection, option)) {
+  const expectedOptionId = buildOptionId({
+    pair: selection.market.symbol,
+    strategy: selection.strategyProfile,
+    model: selection.modelKey,
+  });
+  if (selection.optionId !== expectedOptionId) {
     return {
       selection,
-      option,
       validation: {
         status: "option-mismatch",
-        reason: `Persisted tradingSelection for option \"${selection.optionId}\" no longer matches the current agent.md option catalog.`,
+        reason: `Persisted tradingSelection.optionId \"${selection.optionId}\" does not match its component fields (expected \"${expectedOptionId}\").`,
       },
     };
   }
 
   return {
     selection,
-    option,
     validation: {
       status: "validated",
       reason: null,
@@ -329,17 +329,18 @@ export function resolveSelectionValidation(
   };
 }
 
-function selectionMatchesOption(
+function findMissingSelectionAxis(
   selection: TradingSelection,
-  option: AgentMdTradingOption,
-): boolean {
-  return (
-    selection.market.marketId === option.market.marketId &&
-    selection.market.mode === option.market.mode &&
-    selection.market.symbol === option.market.symbol &&
-    selection.market.venue === option.market.venue &&
-    selection.modelKey === option.modelKey &&
-    selection.strategyKey === option.strategyKey &&
-    selection.strategyProfile === option.strategyProfile
-  );
+  catalog: AgentMdTradingOptionsCatalog,
+): string | null {
+  if (!catalog.pairs.some((entry) => entry.symbol === selection.market.symbol)) {
+    return `Persisted tradingSelection pair \"${selection.market.symbol}\" is not present in agents.md trading options.`;
+  }
+  if (!catalog.strategies.includes(selection.strategyProfile)) {
+    return `Persisted tradingSelection strategy \"${selection.strategyProfile}\" is not present in agents.md trading options.`;
+  }
+  if (!catalog.models.includes(selection.modelKey)) {
+    return `Persisted tradingSelection model \"${selection.modelKey}\" is not present in agents.md trading options.`;
+  }
+  return null;
 }

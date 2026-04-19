@@ -38,7 +38,7 @@ const WALLET_EXISTS_NEXT_ACTIONS: readonly {
 /**
  * Default market configuration used when bootstrapping a fresh runtime state.
  * This is a safe placeholder — the operator must select a real trading option
- * via the agent.md catalog before trading can begin.
+ * via the agents.md catalog before trading can begin.
  */
 const BOOTSTRAP_MARKET = {
   venue: "hyperliquid" as const,

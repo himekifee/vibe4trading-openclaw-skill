@@ -14,35 +14,27 @@ import { deserializeAgentMdCacheState } from "../src/state";
 import { hashMarkdown, readAgentMdCache, refreshAgentMdCache } from "../src/v4t";
 
 const VALID_TRADING_OPTIONS_JSON = `{
-  "options": [
+  "models": ["gpt-5.4", "gemini-3.1-pro-preview"],
+  "strategies": ["aggressive", "balanced", "conservative"],
+  "pairs": [
     {
-      "id": "btc-balanced",
-      "market": {
-        "venue": "hyperliquid",
-        "mode": "perp",
-        "marketId": "perps:hyperliquid:BTC-PERP",
-        "symbol": "BTC-PERP"
-      },
-      "modelKey": "openclaw-daemon",
-      "strategyKey": "momentum-v2",
-      "label": "BTC Momentum Balanced",
-      "strategyProfile": "balanced"
+      "venue": "hyperliquid",
+      "mode": "perp",
+      "marketId": "perps:hyperliquid:BTC-PERP",
+      "symbol": "BTC-PERP"
     },
     {
-      "id": "eth-conservative",
-      "market": {
-        "venue": "hyperliquid",
-        "mode": "spot",
-        "marketId": "spot:hyperliquid:ETH/USDC",
-        "symbol": "ETH/USDC"
-      },
-      "modelKey": "openclaw-daemon",
-      "strategyKey": "mean-reversion-v1",
-      "label": "ETH Spot Conservative",
-      "strategyProfile": "conservative"
+      "venue": "hyperliquid",
+      "mode": "spot",
+      "marketId": "spot:hyperliquid:ETH/USDC",
+      "symbol": "ETH/USDC"
     }
   ],
-  "recommendedOptionId": "btc-balanced"
+  "recommended": {
+    "pair": "BTC-PERP",
+    "strategy": "balanced",
+    "model": "gpt-5.4"
+  }
 }`;
 
 function createAgentMdMarkdown(
@@ -93,8 +85,26 @@ ${platformStatusText}
 `;
 }
 
+const SINGLE_ETH_PERP_OPTIONS_JSON = `{
+  "models": ["openclaw-daemon"],
+  "strategies": ["balanced"],
+  "pairs": [
+    {
+      "venue": "hyperliquid",
+      "mode": "perp",
+      "marketId": "perps:hyperliquid:ETH-PERP",
+      "symbol": "ETH-PERP"
+    }
+  ],
+  "recommended": {
+    "pair": "ETH-PERP",
+    "strategy": "balanced",
+    "model": "openclaw-daemon"
+  }
+}`;
+
 describe("agent-md", () => {
-  it("fetches, hashes, and persists bounded agent.md cache metadata", async () => {
+  it("fetches, hashes, and persists bounded agents.md cache metadata", async () => {
     const runtimeDir = await mkdtemp(join(tmpdir(), "agent-md-cache-"));
     const cacheFilePath = join(runtimeDir, "agent-md-cache.json");
     const markdown = createAgentMdMarkdown();
@@ -132,40 +142,26 @@ describe("agent-md", () => {
       hash: hashMarkdown(markdown),
       status: "degraded",
       tradingOptions: {
-        recommendedOptionId: "btc-balanced",
+        recommended: { pair: "BTC-PERP", strategy: "balanced", model: "gpt-5.4" },
       },
     });
-    expect(persisted.tradingOptions?.options).toHaveLength(2);
+    expect(persisted.tradingOptions?.pairs).toHaveLength(2);
+    expect(persisted.tradingOptions?.models).toEqual(["gpt-5.4", "gemini-3.1-pro-preview"]);
+    expect(persisted.tradingOptions?.strategies).toEqual([
+      "aggressive",
+      "balanced",
+      "conservative",
+    ]);
   });
 
-  it("does not leave temp files after successful agent.md cache persistence", async () => {
+  it("does not leave temp files after successful agents.md cache persistence", async () => {
     const runtimeDir = await mkdtemp(join(tmpdir(), "agent-md-atomic-"));
     const cacheFilePath = join(runtimeDir, "agent-md-cache.json");
-    const markdown = createAgentMdMarkdown(
-      `{
-  "options": [
-    {
-      "id": "eth-balanced",
-      "market": {
-        "venue": "hyperliquid",
-        "mode": "perp",
-        "marketId": "perps:hyperliquid:ETH-PERP",
-        "symbol": "ETH-PERP"
-      },
-      "modelKey": "openclaw-daemon",
-      "strategyKey": "momentum-v1",
-      "label": "ETH Balanced",
-      "strategyProfile": "balanced"
-    }
-  ],
-  "recommendedOptionId": "eth-balanced"
-}`,
-      {
-        version: "1",
-        apiContractVersion: "1",
-        status: "active",
-      },
-    );
+    const markdown = createAgentMdMarkdown(SINGLE_ETH_PERP_OPTIONS_JSON, {
+      version: "1",
+      apiContractVersion: "1",
+      status: "active",
+    });
 
     await refreshAgentMdCache({
       cacheFilePath,
@@ -184,31 +180,11 @@ describe("agent-md", () => {
   it("does not leave temp files after 304 revalidation persistence", async () => {
     const runtimeDir = await mkdtemp(join(tmpdir(), "agent-md-atomic-304-"));
     const cacheFilePath = join(runtimeDir, "agent-md-cache.json");
-    const markdown = createAgentMdMarkdown(
-      `{
-  "options": [
-    {
-      "id": "eth-balanced",
-      "market": {
-        "venue": "hyperliquid",
-        "mode": "perp",
-        "marketId": "perps:hyperliquid:ETH-PERP",
-        "symbol": "ETH-PERP"
-      },
-      "modelKey": "openclaw-daemon",
-      "strategyKey": "momentum-v1",
-      "label": "ETH Balanced",
-      "strategyProfile": "balanced"
-    }
-  ],
-  "recommendedOptionId": "eth-balanced"
-}`,
-      {
-        version: "1",
-        apiContractVersion: "1",
-        status: "active",
-      },
-    );
+    const markdown = createAgentMdMarkdown(SINGLE_ETH_PERP_OPTIONS_JSON, {
+      version: "1",
+      apiContractVersion: "1",
+      status: "active",
+    });
 
     await refreshAgentMdCache({
       cacheFilePath,
@@ -237,31 +213,11 @@ describe("agent-md", () => {
   it("revalidates with etag and refreshes fetchedAt on 304 responses", async () => {
     const runtimeDir = await mkdtemp(join(tmpdir(), "agent-md-304-"));
     const cacheFilePath = join(runtimeDir, "agent-md-cache.json");
-    const markdown = createAgentMdMarkdown(
-      `{
-  "options": [
-    {
-      "id": "eth-balanced",
-      "market": {
-        "venue": "hyperliquid",
-        "mode": "perp",
-        "marketId": "perps:hyperliquid:ETH-PERP",
-        "symbol": "ETH-PERP"
-      },
-      "modelKey": "openclaw-daemon",
-      "strategyKey": "momentum-v1",
-      "label": "ETH Balanced",
-      "strategyProfile": "balanced"
-    }
-  ],
-  "recommendedOptionId": "eth-balanced"
-}`,
-      {
-        version: "1",
-        apiContractVersion: "1",
-        status: "active",
-      },
-    );
+    const markdown = createAgentMdMarkdown(SINGLE_ETH_PERP_OPTIONS_JSON, {
+      version: "1",
+      apiContractVersion: "1",
+      status: "active",
+    });
 
     await refreshAgentMdCache({
       cacheFilePath,
@@ -302,32 +258,12 @@ describe("agent-md", () => {
   });
 
   it("parses CRLF-terminated frontmatter identically to LF input", () => {
-    const lf = createAgentMdMarkdown(
-      `{
-  "options": [
-    {
-      "id": "crlf-test",
-      "market": {
-        "venue": "hyperliquid",
-        "mode": "perp",
-        "marketId": "perps:hyperliquid:BTC-PERP",
-        "symbol": "BTC-PERP"
-      },
-      "modelKey": "openclaw-daemon",
-      "strategyKey": "momentum-v1",
-      "label": "CRLF Test",
-      "strategyProfile": "balanced"
-    }
-  ],
-  "recommendedOptionId": "crlf-test"
-}`,
-      {
-        version: "1",
-        status: "active",
-        extraFrontmatterLines: [],
-        platformStatusText: "Body",
-      },
-    );
+    const lf = createAgentMdMarkdown(SINGLE_ETH_PERP_OPTIONS_JSON, {
+      version: "1",
+      status: "active",
+      extraFrontmatterLines: [],
+      platformStatusText: "Body",
+    });
     const crlf = lf.replace(/\n/g, "\r\n");
 
     const lfResult = extractAgentMdGuidance(lf);
@@ -385,57 +321,44 @@ describe("agent-md", () => {
     const result = extractAgentMdGuidance(createAgentMdMarkdown());
 
     expect(result.tradingOptions).toEqual({
-      options: [
+      models: ["gpt-5.4", "gemini-3.1-pro-preview"],
+      strategies: ["aggressive", "balanced", "conservative"],
+      pairs: [
         {
-          id: "btc-balanced",
-          market: {
+          venue: "hyperliquid",
+          mode: "perp",
+          marketId: "perps:hyperliquid:BTC-PERP",
+          symbol: "BTC-PERP",
+        },
+        {
+          venue: "hyperliquid",
+          mode: "spot",
+          marketId: "spot:hyperliquid:ETH/USDC",
+          symbol: "ETH/USDC",
+        },
+      ],
+      recommended: {
+        pair: "BTC-PERP",
+        strategy: "balanced",
+        model: "gpt-5.4",
+      },
+    });
+  });
+
+  it("validates catalog strategies against the locked enum", () => {
+    expect(() =>
+      parseAgentMdTradingOptionsCatalog({
+        models: ["openclaw-daemon"],
+        strategies: ["yolo"],
+        pairs: [
+          {
             venue: "hyperliquid",
             mode: "perp",
             marketId: "perps:hyperliquid:BTC-PERP",
             symbol: "BTC-PERP",
           },
-          modelKey: "openclaw-daemon",
-          strategyKey: "momentum-v2",
-          label: "BTC Momentum Balanced",
-          strategyProfile: "balanced",
-        },
-        {
-          id: "eth-conservative",
-          market: {
-            venue: "hyperliquid",
-            mode: "spot",
-            marketId: "spot:hyperliquid:ETH/USDC",
-            symbol: "ETH/USDC",
-          },
-          modelKey: "openclaw-daemon",
-          strategyKey: "mean-reversion-v1",
-          label: "ETH Spot Conservative",
-          strategyProfile: "conservative",
-        },
-      ],
-      recommendedOptionId: "btc-balanced",
-    });
-  });
-
-  it("validates catalog strategyProfile against the locked enum", () => {
-    expect(() =>
-      parseAgentMdTradingOptionsCatalog({
-        options: [
-          {
-            id: "opt-1",
-            market: {
-              venue: "hyperliquid",
-              mode: "perp",
-              marketId: "perps:hyperliquid:BTC-PERP",
-              symbol: "BTC-PERP",
-            },
-            modelKey: "openclaw-daemon",
-            strategyKey: "momentum-v1",
-            label: "Option",
-            strategyProfile: "yolo",
-          },
         ],
-        recommendedOptionId: "opt-1",
+        recommended: null,
       }),
     ).toThrowError(/must be one of/i);
   });
@@ -444,31 +367,11 @@ describe("agent-md", () => {
     const runtimeDir = await mkdtemp(join(tmpdir(), "agent-md-no-fm-"));
     const cacheFilePath = join(runtimeDir, "agent-md-cache.json");
 
-    const validMarkdown = createAgentMdMarkdown(
-      `{
-  "options": [
-    {
-      "id": "eth-balanced",
-      "market": {
-        "venue": "hyperliquid",
-        "mode": "perp",
-        "marketId": "perps:hyperliquid:ETH-PERP",
-        "symbol": "ETH-PERP"
-      },
-      "modelKey": "openclaw-daemon",
-      "strategyKey": "momentum-v1",
-      "label": "ETH Balanced",
-      "strategyProfile": "balanced"
-    }
-  ],
-  "recommendedOptionId": "eth-balanced"
-}`,
-      {
-        version: "1",
-        apiContractVersion: "1",
-        status: "active",
-      },
-    );
+    const validMarkdown = createAgentMdMarkdown(SINGLE_ETH_PERP_OPTIONS_JSON, {
+      version: "1",
+      apiContractVersion: "1",
+      status: "active",
+    });
 
     await refreshAgentMdCache({
       cacheFilePath,
@@ -498,13 +401,13 @@ describe("agent-md", () => {
     if (result.kind !== "degraded") throw new Error("Expected degraded result");
     expect(result.reason).toBe("invalid-agent-md");
     expect(result.httpStatus).toBe(200);
-    expect(result.message).toBe("agent.md response has no frontmatter.");
+    expect(result.message).toBe("agents.md response has no frontmatter.");
     expect(result.cache?.status).toBe("active");
-    expect(result.cache?.tradingOptions?.recommendedOptionId).toBe("eth-balanced");
+    expect(result.cache?.tradingOptions?.recommended?.pair).toBe("ETH-PERP");
 
     const preservedCache = await readAgentMdCache({ cacheFilePath });
     expect(preservedCache?.status).toBe("active");
-    expect(preservedCache?.tradingOptions?.recommendedOptionId).toBe("eth-balanced");
+    expect(preservedCache?.tradingOptions?.recommended?.pair).toBe("ETH-PERP");
   });
 
   it("returns degraded with null cache when 200 OK body has no frontmatter and no prior cache", async () => {
@@ -600,11 +503,11 @@ No catalog here.
     expect(result.kind).toBe("degraded");
     if (result.kind !== "degraded") throw new Error("Expected degraded result");
     expect(result.reason).toBe("invalid-agent-md");
-    expect(result.message).toBe("agent.md is missing required # Trading Options section.");
-    expect(result.cache?.tradingOptions?.recommendedOptionId).toBe("btc-balanced");
+    expect(result.message).toBe("agents.md is missing required # Trading Options section.");
+    expect(result.cache?.tradingOptions?.recommended?.pair).toBe("BTC-PERP");
 
     const preservedCache = await readAgentMdCache({ cacheFilePath });
-    expect(preservedCache?.tradingOptions?.recommendedOptionId).toBe("btc-balanced");
+    expect(preservedCache?.tradingOptions?.recommended?.pair).toBe("BTC-PERP");
   });
 
   it("degrades and preserves the prior cache when Trading Options json is malformed", async () => {
@@ -627,22 +530,17 @@ No catalog here.
       fetchImpl: async () =>
         new Response(
           createAgentMdMarkdown(`{
-  "options": [
+  "models": ["openclaw-daemon"],
+  "strategies": ["yolo"],
+  "pairs": [
     {
-      "id": "bad-risk",
-      "market": {
-        "venue": "hyperliquid",
-        "mode": "perp",
-        "marketId": "perps:hyperliquid:BTC-PERP",
-        "symbol": "BTC-PERP"
-      },
-      "modelKey": "openclaw-daemon",
-      "strategyKey": "momentum-v1",
-      "label": "Bad Risk",
-      "strategyProfile": "yolo"
+      "venue": "hyperliquid",
+      "mode": "perp",
+      "marketId": "perps:hyperliquid:BTC-PERP",
+      "symbol": "BTC-PERP"
     }
   ],
-  "recommendedOptionId": "bad-risk"
+  "recommended": null
 }`),
           {
             status: 200,
@@ -654,11 +552,11 @@ No catalog here.
     expect(result.kind).toBe("degraded");
     if (result.kind !== "degraded") throw new Error("Expected degraded result");
     expect(result.reason).toBe("invalid-agent-md");
-    expect(result.message).toMatch(/strategyProfile must be one of/i);
-    expect(result.cache?.tradingOptions?.recommendedOptionId).toBe("btc-balanced");
+    expect(result.message).toMatch(/strategies\[0\] must be one of/i);
+    expect(result.cache?.tradingOptions?.recommended?.pair).toBe("BTC-PERP");
 
     const preservedCache = await readAgentMdCache({ cacheFilePath });
-    expect(preservedCache?.tradingOptions?.recommendedOptionId).toBe("btc-balanced");
+    expect(preservedCache?.tradingOptions?.recommended?.pair).toBe("BTC-PERP");
   });
 
   it("degrades with null cache when Trading Options catalog is malformed and no prior cache exists", async () => {
@@ -671,8 +569,17 @@ No catalog here.
       fetchImpl: async () =>
         new Response(
           createAgentMdMarkdown(`{
-  "options": [],
-  "recommendedOptionId": "missing"
+  "models": [],
+  "strategies": ["balanced"],
+  "pairs": [
+    {
+      "venue": "hyperliquid",
+      "mode": "perp",
+      "marketId": "perps:hyperliquid:BTC-PERP",
+      "symbol": "BTC-PERP"
+    }
+  ],
+  "recommended": null
 }`),
           {
             status: 200,
@@ -687,7 +594,7 @@ No catalog here.
     expect(result.cache).toBeNull();
   });
 
-  it("rejects legacy riskProfile in Trading Options", () => {
+  it("rejects legacy options[] shape in Trading Options", () => {
     const parseLegacyCatalog = () =>
       parseAgentMdTradingOptionsCatalog({
         options: [
@@ -702,14 +609,13 @@ No catalog here.
             modelKey: "openclaw-daemon",
             strategyKey: "momentum-v2",
             label: "BTC Momentum Balanced",
-            riskProfile: "balanced",
+            strategyProfile: "balanced",
           },
         ],
         recommendedOptionId: "btc-balanced",
       });
 
     expect(parseLegacyCatalog).toThrow(SchemaValidationError);
-    expect(parseLegacyCatalog).toThrow(/strategyProfile/);
   });
 
   it("retries network failures exactly 3 times with 2 delays between attempts", async () => {

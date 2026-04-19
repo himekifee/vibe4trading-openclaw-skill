@@ -1,4 +1,3 @@
-import type { AgentMdTradingOption } from "../config/agent-md";
 import type { ALLOWED_ORDER_STYLES } from "../config/constants";
 import type { ExecutionAuditEntry, ExecutionResult } from "../execution";
 import type { CollateralPrepResult, OnboardingStatusResult } from "../onboarding";
@@ -170,6 +169,11 @@ export type TickSelectionContext = {
   readonly validation: TickSelectionValidation;
 };
 
+export type SelectionResolution = {
+  readonly selection: TradingSelection | null;
+  readonly validation: TickSelectionValidation;
+};
+
 export type DaemonTickContextSnapshot = {
   readonly currentSlot: string;
   readonly daemonStatus: RuntimeState["daemonStatus"];
@@ -204,12 +208,6 @@ export type NormalizedExecuteTickInput = {
   readonly priorInteractionSummary?: PriorInteractionSummary;
   readonly executionIntent?: PolicyExecutionIntent;
   readonly executionContext: DaemonExecutionContext;
-};
-
-export type SelectionResolution = {
-  readonly selection: TradingSelection | null;
-  readonly option: AgentMdTradingOption | null;
-  readonly validation: TickSelectionValidation;
 };
 
 export type CancelOrderEntry = {

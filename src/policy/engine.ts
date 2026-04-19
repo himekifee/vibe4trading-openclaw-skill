@@ -236,7 +236,7 @@ export function evaluateOpenClawPolicy(input: PolicyEvaluationInput): LocalPolic
       suggestionId: readSuggestionId(input.suggestionResult),
       clamps: [],
       holdReason: "agent-md-unavailable",
-      message: "Policy view is unavailable because the latest parsed agent.md state is missing.",
+      message: "Policy view is unavailable because the latest parsed agents.md state is missing.",
     });
   }
 
@@ -259,7 +259,7 @@ export function evaluateOpenClawPolicy(input: PolicyEvaluationInput): LocalPolic
       suggestionId: readSuggestionId(input.suggestionResult),
       clamps: [],
       holdReason: "agent-md-degraded",
-      message: `agent.md status is ${input.agentMdPolicy.status}, so OpenClaw will hold instead of trading.`,
+      message: `agents.md status is ${input.agentMdPolicy.status}, so OpenClaw will hold instead of trading.`,
     });
   }
 

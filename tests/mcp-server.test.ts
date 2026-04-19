@@ -258,8 +258,10 @@ describe("MCP tools/list", () => {
     expect(acknowledgeLiveTrading?.inputSchema.properties?.confirmed?.type).toBe("boolean");
 
     const setTradingSelection = result.tools.find((tool) => tool.name === "set_trading_selection");
-    expect(setTradingSelection?.inputSchema.required).toEqual(["optionId"]);
-    expect(setTradingSelection?.inputSchema.properties?.optionId?.type).toBe("string");
+    expect(setTradingSelection?.inputSchema.required).toEqual(["pair", "strategy", "model"]);
+    expect(setTradingSelection?.inputSchema.properties?.pair?.type).toBe("string");
+    expect(setTradingSelection?.inputSchema.properties?.strategy?.type).toBe("string");
+    expect(setTradingSelection?.inputSchema.properties?.model?.type).toBe("string");
 
     const acceptOverridePhrase = result.tools.find(
       (tool) => tool.name === "accept_override_phrase",
@@ -669,7 +671,7 @@ describe("MCP operator-control tools", () => {
   } as const;
 
   const TEST_AGENT_MD_CACHE = {
-    url: "https://example.com/agent.md",
+    url: "https://example.com/agents.md",
     version: "1.0.0",
     lastUpdated: "2026-03-27T10:00:00.000Z",
     apiContractVersion: "1",
@@ -678,30 +680,22 @@ describe("MCP operator-control tools", () => {
     hash: "abc123",
     fetchedAt: "2026-03-27T10:00:00.000Z",
     tradingOptions: {
-      options: [
+      models: ["openclaw-daemon"],
+      strategies: ["aggressive", "balanced", "conservative"],
+      pairs: [
+        TEST_MARKET,
         {
-          id: "btc-balanced",
-          market: TEST_MARKET,
-          modelKey: "openclaw-daemon",
-          strategyKey: "trend-follow",
-          label: "BTC Balanced",
-          strategyProfile: "balanced",
-        },
-        {
-          id: "eth-aggressive",
-          market: {
-            venue: "hyperliquid",
-            mode: "perp",
-            marketId: "perps:hyperliquid:ETH-PERP",
-            symbol: "ETH-PERP",
-          },
-          modelKey: "openclaw-daemon",
-          strategyKey: "momentum",
-          label: "ETH Aggressive",
-          strategyProfile: "aggressive",
+          venue: "hyperliquid",
+          mode: "perp",
+          marketId: "perps:hyperliquid:ETH-PERP",
+          symbol: "ETH-PERP",
         },
       ],
-      recommendedOptionId: "btc-balanced",
+      recommended: {
+        pair: "BTC-PERP",
+        strategy: "balanced",
+        model: "openclaw-daemon",
+      },
     },
   };
 
@@ -782,7 +776,7 @@ describe("MCP operator-control tools", () => {
     try {
       const res = await rpc("tools/call", 42, {
         name: "set_trading_selection",
-        arguments: { optionId: "btc-balanced" },
+        arguments: { pair: "BTC-PERP", strategy: "balanced", model: "openclaw-daemon" },
       });
       expect(res.error).toBeUndefined();
 
@@ -793,34 +787,34 @@ describe("MCP operator-control tools", () => {
         tradingSelection: { optionId: string };
       };
       expect(payload.selected).toBe(true);
-      expect(payload.tradingSelection.optionId).toBe("btc-balanced");
+      expect(payload.tradingSelection.optionId).toBe("BTC-PERP|balanced|openclaw-daemon");
 
       const persisted = JSON.parse(await readFile(STATE_FILE, "utf8")) as {
         tradingSelection: { optionId: string; market: { symbol: string } } | null;
       };
       expect(persisted.tradingSelection).not.toBeNull();
-      expect(persisted.tradingSelection?.optionId).toBe("btc-balanced");
+      expect(persisted.tradingSelection?.optionId).toBe("BTC-PERP|balanced|openclaw-daemon");
       expect(persisted.tradingSelection?.market.symbol).toBe("BTC-PERP");
     } finally {
       await cleanup();
     }
   });
 
-  it("set_trading_selection rejects invalid optionId", async () => {
+  it("set_trading_selection rejects invalid pair", async () => {
     await setupState();
     await setupAgentMdCache();
 
     try {
       const res = await rpc("tools/call", 43, {
         name: "set_trading_selection",
-        arguments: { optionId: "nonexistent-option" },
+        arguments: { pair: "NONEXISTENT", strategy: "balanced", model: "openclaw-daemon" },
       });
       expect(res.error).toBeUndefined();
 
       const result = res.result as ToolCallResult;
       expect(result.isError).toBe(true);
-      expect(result.content[0].text).toContain("Invalid optionId");
-      expect(result.content[0].text).toContain("nonexistent-option");
+      expect(result.content[0].text).toContain("Invalid pair");
+      expect(result.content[0].text).toContain("NONEXISTENT");
     } finally {
       await cleanup();
     }
@@ -906,14 +900,21 @@ describe("MCP operator-control tools", () => {
       expect(result.isError).toBeUndefined();
       const payload = JSON.parse(result.content[0].text) as {
         available: boolean;
-        options: Array<{ id: string; label: string; strategyProfile: string }>;
-        recommendedOptionId: string;
+        models: string[];
+        strategies: string[];
+        pairs: Array<{ symbol: string; marketId: string; venue: string; mode: string }>;
+        recommended: { pair: string; strategy: string; model: string } | null;
       };
       expect(payload.available).toBe(true);
-      expect(payload.options).toHaveLength(2);
-      expect(payload.options[0].id).toBe("btc-balanced");
-      expect(payload.options[0].strategyProfile).toBe("balanced");
-      expect(payload.recommendedOptionId).toBe("btc-balanced");
+      expect(payload.models).toEqual(["openclaw-daemon"]);
+      expect(payload.strategies).toEqual(["aggressive", "balanced", "conservative"]);
+      expect(payload.pairs).toHaveLength(2);
+      expect(payload.pairs[0].symbol).toBe("BTC-PERP");
+      expect(payload.recommended).toEqual({
+        pair: "BTC-PERP",
+        strategy: "balanced",
+        model: "openclaw-daemon",
+      });
     } finally {
       await cleanup();
     }

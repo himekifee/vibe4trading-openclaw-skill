@@ -55,7 +55,6 @@ export type TradingSelection = {
   readonly optionId: string;
   readonly market: SingleMarketConfig;
   readonly modelKey: string;
-  readonly strategyKey: string;
   readonly strategyProfile: V4tStrategyProfile;
   readonly recommendationId: string | null;
   readonly sourceAgentMdVersion: string | null;
@@ -371,7 +370,6 @@ function parseTradingSelection(value: unknown): TradingSelection | null {
       "optionId",
       "market",
       "modelKey",
-      "strategyKey",
       "strategyProfile",
       "recommendationId",
       "sourceAgentMdVersion",
@@ -391,7 +389,6 @@ function parseTradingSelection(value: unknown): TradingSelection | null {
     optionId: readRequiredString(input, "optionId", context, { minLength: 1 }),
     market: parseSingleMarketConfig(input.market),
     modelKey: readRequiredString(input, "modelKey", context, { minLength: 1 }),
-    strategyKey: readRequiredString(input, "strategyKey", context, { minLength: 1 }),
     strategyProfile: readEnumString(input, "strategyProfile", context, V4T_STRATEGY_PROFILES),
     recommendationId: readNullableString(input, "recommendationId", context, { minLength: 1 }),
     sourceAgentMdVersion: readNullableString(input, "sourceAgentMdVersion", context, {

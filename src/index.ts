@@ -465,7 +465,7 @@ async function runDaemonOnceScenario(): Promise<void> {
       kind: "updated",
       httpStatus: 200,
       cache: {
-        url: "https://vibe4trading.ai/agent.md",
+        url: "https://vibe4trading.ai/agents.md",
         version: "1",
         lastUpdated: "2026-03-27T12:00:00.000Z",
         apiContractVersion: "1",
@@ -713,7 +713,7 @@ async function runDaemonReconcileEvidenceScenario(): Promise<void> {
       nextActivity: { hasOpenPosition: true, hasPendingOrder: false },
     }),
     refreshAgentMd: async () => {
-      throw new Error("reconcile evidence should not fetch agent.md during start-only proof");
+      throw new Error("reconcile evidence should not fetch agents.md during start-only proof");
     },
     fetchSuggestion: async () => {
       throw new Error("reconcile evidence should not fetch suggestions during start-only proof");
@@ -790,7 +790,7 @@ async function runEmergencyStopScenario(): Promise<void> {
       nextActivity: currentState.exchangeActivity,
     }),
     refreshAgentMd: async () => {
-      throw new Error("halted daemon should not fetch agent.md");
+      throw new Error("halted daemon should not fetch agents.md");
     },
     fetchSuggestion: async () => {
       throw new Error("halted daemon should not fetch suggestion");
@@ -966,15 +966,14 @@ async function runRegressionLifecycleScenario(): Promise<void> {
   /* ── 3. Selection persistence ───────────────────────────────────── */
   const selectionState = createSmokeRuntimeState({
     tradingSelection: {
-      optionId: "opt-eth-aggressive",
+      optionId: "ETH-PERP|aggressive|turbo-v2",
       market: {
         venue: "hyperliquid",
         mode: "perp",
-        marketId: "perps:hyperliquid:ETH",
-        symbol: "ETH",
+        marketId: "perps:hyperliquid:ETH-PERP",
+        symbol: "ETH-PERP",
       },
       modelKey: "turbo-v2",
-      strategyKey: "momentum",
       strategyProfile: "aggressive",
       recommendationId: "rec-001",
       sourceAgentMdVersion: "2",
@@ -982,7 +981,7 @@ async function runRegressionLifecycleScenario(): Promise<void> {
     },
   });
   if (!selectionState.tradingSelection) throw new Error("tradingSelection is null");
-  if (selectionState.tradingSelection.optionId !== "opt-eth-aggressive")
+  if (selectionState.tradingSelection.optionId !== "ETH-PERP|aggressive|turbo-v2")
     throw new Error("tradingSelection optionId mismatch");
   if (selectionState.tradingSelection.strategyProfile !== "aggressive")
     throw new Error("tradingSelection strategyProfile mismatch");
@@ -991,7 +990,6 @@ async function runRegressionLifecycleScenario(): Promise<void> {
     optionId: selectionState.tradingSelection.optionId,
     marketId: selectionState.tradingSelection.market.marketId,
     modelKey: selectionState.tradingSelection.modelKey,
-    strategyKey: selectionState.tradingSelection.strategyKey,
     strategyProfile: selectionState.tradingSelection.strategyProfile,
   };
   console.log("[smoke] regression-lifecycle: 3/12 selection persistence PASS");
@@ -1206,7 +1204,7 @@ async function runRegressionLifecycleScenario(): Promise<void> {
       kind: "updated",
       httpStatus: 200,
       cache: {
-        url: "https://vibe4trading.ai/agent.md",
+        url: "https://vibe4trading.ai/agents.md",
         version: "1",
         lastUpdated: "2026-03-27T12:00:00.000Z",
         apiContractVersion: "1",
@@ -1305,7 +1303,7 @@ async function runRegressionLifecycleScenario(): Promise<void> {
       kind: "updated",
       httpStatus: 200,
       cache: {
-        url: "https://vibe4trading.ai/agent.md",
+        url: "https://vibe4trading.ai/agents.md",
         version: "1",
         lastUpdated: "2026-03-27T12:00:00.000Z",
         apiContractVersion: "1",
@@ -1551,7 +1549,7 @@ async function runRegressionLifecycleScenario(): Promise<void> {
       nextActivity: s.exchangeActivity,
     }),
     refreshAgentMd: async () => {
-      throw new Error("stop test should not refresh agent.md");
+      throw new Error("stop test should not refresh agents.md");
     },
     fetchSuggestion: async () => {
       throw new Error("stop test should not fetch suggestions");

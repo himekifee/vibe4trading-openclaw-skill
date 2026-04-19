@@ -8,9 +8,11 @@ export async function get_trading_options() {
       available: false,
       reason: "agent-md-cache-missing",
       message:
-        "No agent.md cache found. Trading options are unavailable until agent.md is fetched by a cache-refreshing surface such as get_tick_context or execute_tick.",
-      options: [],
-      recommendedOptionId: null,
+        "No agents.md cache found. Trading options are unavailable until agents.md is fetched by a cache-refreshing surface such as get_tick_context or execute_tick.",
+      models: [],
+      strategies: [],
+      pairs: [],
+      recommended: null,
       agentMdVersion: null,
       agentMdFetchedAt: null,
     };
@@ -21,9 +23,11 @@ export async function get_trading_options() {
       available: false,
       reason: "trading-options-missing",
       message:
-        "Agent.md cache exists but contains no trading options catalog. The upstream agent.md may be missing the required # Trading Options section.",
-      options: [],
-      recommendedOptionId: null,
+        "Agent.md cache exists but contains no trading options catalog. The upstream agents.md may be missing the required # Trading Options section.",
+      models: [],
+      strategies: [],
+      pairs: [],
+      recommended: null,
       agentMdVersion: cache.version,
       agentMdFetchedAt: cache.fetchedAt,
     };
@@ -33,15 +37,22 @@ export async function get_trading_options() {
     available: true,
     reason: null,
     message: null,
-    options: cache.tradingOptions.options.map((option) => ({
-      id: option.id,
-      label: option.label,
-      market: option.market,
-      modelKey: option.modelKey,
-      strategyKey: option.strategyKey,
-      strategyProfile: option.strategyProfile,
+    models: [...cache.tradingOptions.models],
+    strategies: [...cache.tradingOptions.strategies],
+    pairs: cache.tradingOptions.pairs.map((pair) => ({
+      symbol: pair.symbol,
+      marketId: pair.marketId,
+      venue: pair.venue,
+      mode: pair.mode,
     })),
-    recommendedOptionId: cache.tradingOptions.recommendedOptionId,
+    recommended:
+      cache.tradingOptions.recommended === null
+        ? null
+        : {
+            pair: cache.tradingOptions.recommended.pair,
+            strategy: cache.tradingOptions.recommended.strategy,
+            model: cache.tradingOptions.recommended.model,
+          },
     agentMdVersion: cache.version,
     agentMdFetchedAt: cache.fetchedAt,
   };

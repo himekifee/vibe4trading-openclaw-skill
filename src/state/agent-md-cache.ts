@@ -1,9 +1,5 @@
 import { extractAgentMdGuidance, parseAgentMdTradingOptionsCatalog } from "../config/agent-md";
-import type {
-  AgentMdStatus,
-  AgentMdTradingOption,
-  AgentMdTradingOptionsCatalog,
-} from "../config/agent-md";
+import type { AgentMdStatus, AgentMdTradingOptionsCatalog } from "../config/agent-md";
 import { DEFAULT_AGENT_MD_URL } from "../config/constants";
 import {
   SchemaValidationError,
@@ -113,7 +109,7 @@ export function serializeAgentMdCacheState(value: AgentMdCacheState): string {
 }
 
 export function deserializeAgentMdCacheState(jsonText: string): AgentMdCacheState {
-  return parseJsonText(jsonText, parseAgentMdCacheState, "agent.md cache file");
+  return parseJsonText(jsonText, parseAgentMdCacheState, "agents.md cache file");
 }
 
 function parseNullableAgentMdTradingOptionsCatalog(
@@ -123,20 +119,5 @@ function parseNullableAgentMdTradingOptionsCatalog(
     return null;
   }
 
-  const catalog = parseAgentMdTradingOptionsCatalog(value);
-  return {
-    options: catalog.options.map((option) => freezeTradingOption(option)),
-    recommendedOptionId: catalog.recommendedOptionId,
-  };
-}
-
-function freezeTradingOption(option: AgentMdTradingOption): AgentMdTradingOption {
-  return {
-    id: option.id,
-    market: option.market,
-    modelKey: option.modelKey,
-    strategyKey: option.strategyKey,
-    label: option.label,
-    strategyProfile: option.strategyProfile,
-  };
+  return parseAgentMdTradingOptionsCatalog(value);
 }

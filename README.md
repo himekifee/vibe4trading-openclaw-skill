@@ -6,7 +6,7 @@ OpenClaw skill for autonomous Hyperliquid trading using vibe4trading strategy su
 
 This skill creates a local wallet, accepts Arbitrum USDC or USDT funding (auto-converting USDT to USDC when needed), bridges into Hyperliquid, automatically prepares perp collateral on isolated margin, fetches trading suggestions from vibe4trading, applies OpenClaw judgment within hard-coded safety caps, and executes trades as one-shot ticks driven by the OpenClaw Gateway scheduler. There is no resident process or loop.
 
-The operator selects a trading combination (market, model, strategy, strategy profile) from a catalog published in the remote `agent.md`. That selection is persisted in runtime state and drives every subsequent suggestion request. There are no hardcoded `balanced` or `openclaw-daemon` defaults in the request path. Internally and across the public tool surface this field is named `strategyProfile`; the external suggestion HTTP query key remains `risk_profile`.
+The operator selects a trading combination (market, model, strategy, strategy profile) from a catalog published in the remote `agents.md`. That selection is persisted in runtime state and drives every subsequent suggestion request. There are no hardcoded `balanced` or `openclaw-daemon` defaults in the request path. Internally and across the public tool surface this field is named `strategyProfile`; the external suggestion HTTP query key remains `risk_profile`.
 
 The 100 USDC cumulative bridge cap gates automated trading: once the cap is reached, the policy holds until the override phrase is accepted. After acceptance, the cap check is bypassed and trading resumes without a dollar ceiling. Override acceptance persists until `reset_override_phrase` is called; it does not erase cumulative bridge accounting or history.
 
@@ -21,7 +21,7 @@ On a fresh checkout with no runtime state yet, the read-only surfaces `get_statu
 
 Cron setup is host-managed through OpenClaw Gateway tooling, not repository code. See `SKILL.md` for the full cron recipe.
 
-Until the upstream vibe4trading suggestion endpoint and `agent.md` document go live, the skill operates in a **hold-only posture** — armed ticks hold (take no trading action) rather than trading blind. Active trading begins automatically once upstream surfaces are available.
+Until the upstream vibe4trading suggestion endpoint and `agents.md` document go live, the skill operates in a **hold-only posture** — armed ticks hold (take no trading action) rather than trading blind. Active trading begins automatically once upstream surfaces are available.
 
 ## Setup
 

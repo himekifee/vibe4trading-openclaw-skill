@@ -42,22 +42,21 @@ Still code-owned.
 
 \`\`\`json
 {
-  "options": [
+  "models": ["openclaw-daemon"],
+  "strategies": ["balanced"],
+  "pairs": [
     {
-      "id": "btc-balanced",
-      "market": {
-        "venue": "hyperliquid",
-        "mode": "perp",
-        "marketId": "perps:hyperliquid:BTC-PERP",
-        "symbol": "BTC-PERP"
-      },
-      "modelKey": "openclaw-daemon",
-      "strategyKey": "momentum-v1",
-      "label": "BTC Balanced",
-      "strategyProfile": "balanced"
+      "venue": "hyperliquid",
+      "mode": "perp",
+      "marketId": "perps:hyperliquid:BTC-PERP",
+      "symbol": "BTC-PERP"
     }
   ],
-  "recommendedOptionId": "btc-balanced"
+  "recommended": {
+    "pair": "BTC-PERP",
+    "strategy": "balanced",
+    "model": "openclaw-daemon"
+  }
 }
 \`\`\`
 
@@ -85,7 +84,11 @@ Maintenance
       "apiContractVersion",
       "status",
     ]);
-    expect(result.cache.tradingOptions?.recommendedOptionId).toBe("btc-balanced");
+    expect(result.cache.tradingOptions?.recommended).toEqual({
+      pair: "BTC-PERP",
+      strategy: "balanced",
+      model: "openclaw-daemon",
+    });
     expect(getHardSafetyCaps()).toEqual({
       MAX_CUMULATIVE_BRIDGE_USD: 100,
       MIN_BRIDGE_USDC: 5.01,
@@ -129,22 +132,21 @@ Quoted.
 
 \`\`\`json
 {
-  "options": [
+  "models": ["openclaw-daemon"],
+  "strategies": ["conservative"],
+  "pairs": [
     {
-      "id": "eth-conservative",
-      "market": {
-        "venue": "hyperliquid",
-        "mode": "spot",
-        "marketId": "spot:hyperliquid:ETH/USDC",
-        "symbol": "ETH/USDC"
-      },
-      "modelKey": "openclaw-daemon",
-      "strategyKey": "mean-reversion-v1",
-      "label": "ETH Conservative",
-      "strategyProfile": "conservative"
+      "venue": "hyperliquid",
+      "mode": "spot",
+      "marketId": "spot:hyperliquid:ETH/USDC",
+      "symbol": "ETH/USDC"
     }
   ],
-  "recommendedOptionId": "eth-conservative"
+  "recommended": {
+    "pair": "ETH/USDC",
+    "strategy": "conservative",
+    "model": "openclaw-daemon"
+  }
 }
 \`\`\`
 
@@ -166,7 +168,11 @@ Maintenance with quoted scalars
       apiContractVersion: "3",
       status: "maintenance",
     });
-    expect(result.cache.tradingOptions?.recommendedOptionId).toBe("eth-conservative");
+    expect(result.cache.tradingOptions?.recommended).toEqual({
+      pair: "ETH/USDC",
+      strategy: "conservative",
+      model: "openclaw-daemon",
+    });
     expect(getHardSafetyCaps()).toEqual({
       MAX_CUMULATIVE_BRIDGE_USD: 100,
       MIN_BRIDGE_USDC: 5.01,

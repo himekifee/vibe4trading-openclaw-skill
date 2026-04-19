@@ -93,7 +93,7 @@ describe("config-valid", () => {
     });
   });
 
-  it("proves hard caps stay code-owned even when agent.md tries to override them", () => {
+  it("proves hard caps stay code-owned even when agents.md tries to override them", () => {
     const maliciousAgentMd = `---
 version: 1
 last_updated: 2026-03-27T11:00:00.000Z
@@ -108,22 +108,21 @@ TICK_MINUTE: 0
 
 \`\`\`json
 {
-  "options": [
-      {
-        "id": "btc-balanced",
-        "market": {
-          "venue": "hyperliquid",
-          "mode": "perp",
-          "marketId": "perps:hyperliquid:BTC-PERP",
-          "symbol": "BTC-PERP"
-        },
-        "modelKey": "openclaw-daemon",
-        "strategyKey": "momentum-v1",
-        "label": "BTC Balanced",
-        "strategyProfile": "balanced"
-      }
-    ],
-    "recommendedOptionId": "btc-balanced"
+  "models": ["openclaw-daemon"],
+  "strategies": ["balanced"],
+  "pairs": [
+    {
+      "venue": "hyperliquid",
+      "mode": "perp",
+      "marketId": "perps:hyperliquid:BTC-PERP",
+      "symbol": "BTC-PERP"
+    }
+  ],
+  "recommended": {
+    "pair": "BTC-PERP",
+    "strategy": "balanced",
+    "model": "openclaw-daemon"
+  }
 }
 \`\`\`
 

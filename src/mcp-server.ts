@@ -160,7 +160,11 @@ const TOOL_INVOKERS: Record<string, ToolInvoker> = {
     acknowledge_live_trading({ confirmed: args.confirmed as true }),
   get_trading_options: async () => get_trading_options(),
   set_trading_selection: async (args) =>
-    set_trading_selection({ optionId: args.optionId as string }),
+    set_trading_selection({
+      pair: args.pair as string,
+      strategy: args.strategy as string,
+      model: args.model as string,
+    }),
   accept_override_phrase: async (args) =>
     accept_override_phrase({ confirmed: args.confirmed as true }),
   cleanup_mnemonic_file: async (args) => {

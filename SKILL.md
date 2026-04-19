@@ -81,9 +81,9 @@ The auto-bridge respects the lifetime deposit cap (see Safety below). If the wal
 
 ## Safety Limits
 
-All safety limits are hard-coded in `src/config/constants.ts`. They cannot be overridden by `agent.md`, remote configuration, or any external signal.
+All safety limits are hard-coded in `src/config/constants.ts`. They cannot be overridden by `agents.md`, remote configuration, or any external signal.
 
-The remote `agent.md` document may define the selectable trading combinations through a required `# Trading Options` section containing exactly one fenced `json` block shaped as `{ models: string[], strategies: string[], pairs: { symbol, marketId, venue, mode }[], recommended: { pair, strategy, model } | null }`. The agent may choose any combination of one item from each list. The `recommended` object points to the combo with the most recent successful tick and highest return (or `null` if no live data). That catalog may set validated `market`, `modelKey`, `strategyKey`, and `strategyProfile` values for operator/agent selection, but it still cannot override code-owned safety caps.
+The remote `agents.md` document may define the selectable trading combinations through a required `# Trading Options` section containing exactly one fenced `json` block shaped as `{ models: string[], strategies: string[], pairs: { symbol, marketId, venue, mode }[], recommended: { pair, strategy, model } | null }`. The agent may choose any combination of one item from each list. The `recommended` object points to the combo with the most recent successful tick and highest return (or `null` if no live data). That catalog may set validated `market`, `modelKey`, `strategyKey`, and `strategyProfile` values for operator/agent selection, but it still cannot override code-owned safety caps.
 
 | Limit | Value | Description |
 |---|---|---|
@@ -92,7 +92,7 @@ The remote `agent.md` document may define the selectable trading combinations th
 | Maximum leverage | 5x | Orders exceeding this are clamped |
 | Max position fraction | 95% | Maximum notional as fraction of available balance |
 | Tick cadence | :30 minute mark | One-shot execution once per hour at hh:30 UTC |
-| Agent.md max age | 300 seconds | Stale agent.md triggers degraded-mode hold |
+| Agent.md max age | 300 seconds | Stale agents.md triggers degraded-mode hold |
 | Suggestion max age | 900 seconds | Expired suggestions are rejected |
 | Dead-man switch | 90 seconds | Exchange auto-cancels orders if skill goes silent |
 
@@ -191,8 +191,8 @@ The skill exposes eighteen tools through `src/tools/`:
 | Tool | Description |
 |---|---|
 | `acknowledge_live_trading` | Record explicit mainnet live-trading consent. Required before `start_trading` on mainnet. Accepts `{ confirmed: true }`. |
-| `get_trading_options` | Return the available trading option catalog from the cached `agent.md`. Read-only, no state mutation. Option entries expose `strategyProfile`. |
-| `set_trading_selection` | Persist the operator's chosen trading combination by `optionId` from the `agent.md` catalog. |
+| `get_trading_options` | Return the available trading option catalog from the cached `agents.md`. Read-only, no state mutation. Option entries expose `strategyProfile`. |
+| `set_trading_selection` | Persist the operator's chosen trading combination by `optionId` from the `agents.md` catalog. |
 | `accept_override_phrase` | Record operator consent for the bridge-cap override phrase. Accepts `{ confirmed: true }`. |
 
 ### Onboarding & Funding
@@ -266,7 +266,7 @@ src/
   onboarding/     Funding detection and auto-deposit
   policy/         OpenClaw policy evaluation
   state/          Runtime state types and slot computation
-  v4t/            vibe4trading API client, agent.md cache, suggestion adapter
+  v4t/            vibe4trading API client, agents.md cache, suggestion adapter
   wallet/         Wallet creation, mnemonic confirmation
   mcp-server.ts   MCP stdio server entrypoint
   index.ts        CLI entrypoint (smoke scenarios, one-shot tick)
@@ -293,4 +293,4 @@ bun run format       # Auto-format with Biome
 
 Core modules are implemented and tested: wallet, chain infrastructure, onboarding, policy evaluation, execution engine, tick orchestration, and tool wrappers. The platform suggestion endpoint is not yet available in production (see `docs/platform-expectations.md` for the expected contract and current gaps).
 
-Until the upstream suggestion endpoint and `agent.md` document go live, the skill operates in a **hold-only posture**: armed ticks detect no actionable suggestion or no valid cached catalog and hold (take no trading action) rather than trading blind. This is deliberate — the skill will begin active trading automatically once the upstream surfaces become available, with no code changes required.
+Until the upstream suggestion endpoint and `agents.md` document go live, the skill operates in a **hold-only posture**: armed ticks detect no actionable suggestion or no valid cached catalog and hold (take no trading action) rather than trading blind. This is deliberate — the skill will begin active trading automatically once the upstream surfaces become available, with no code changes required.

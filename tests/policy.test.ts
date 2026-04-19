@@ -72,7 +72,7 @@ const accountState: PolicyAccountState = {
 };
 
 describe("policy", () => {
-  it("holds when agent.md status is degraded", () => {
+  it("holds when agents.md status is degraded", () => {
     const decision = evaluateOpenClawPolicy({
       now: new Date("2026-03-27T12:05:00.000Z"),
       runtimeState: createBaseRuntimeState(),

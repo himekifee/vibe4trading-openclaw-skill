@@ -137,7 +137,6 @@ describe("config-invalid", () => {
         optionId: "opt-1",
         market: validStateFixture.market,
         modelKey: "openclaw-daemon",
-        strategyKey: "momentum-v1",
         strategyProfile: "balanced",
         recommendationId: null,
         sourceAgentMdVersion: null,
@@ -156,7 +155,6 @@ describe("config-invalid", () => {
           optionId: "opt-1",
           market: validStateFixture.market,
           modelKey: "openclaw-daemon",
-          strategyKey: "momentum-v1",
           strategyProfile: "yolo",
           recommendationId: null,
           sourceAgentMdVersion: null,
@@ -166,15 +164,14 @@ describe("config-invalid", () => {
     ).toThrowError(/must be one of/i);
   });
 
-  it("rejects tradingSelection with empty strategyKey", () => {
+  it("rejects tradingSelection with empty modelKey", () => {
     expect(() =>
       parseRuntimeState({
         ...validStateFixture,
         tradingSelection: {
           optionId: "opt-1",
           market: validStateFixture.market,
-          modelKey: "openclaw-daemon",
-          strategyKey: "",
+          modelKey: "",
           strategyProfile: "balanced",
           recommendationId: null,
           sourceAgentMdVersion: null,
@@ -192,7 +189,6 @@ describe("config-invalid", () => {
           optionId: "opt-1",
           market: validStateFixture.market,
           modelKey: "openclaw-daemon",
-          strategyKey: "momentum-v1",
           strategyProfile: "balanced",
           recommendationId: null,
           sourceAgentMdVersion: "7",
